@@ -1,13 +1,111 @@
 import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+
 import { config } from './config';
+import { createMcpRouter } from './mcp';
+import { apiRouter } from './api';
+import { errorHandler, notFoundHandler } from './middleware';
 
-console.log('🚀 Expense Server Configuration Loaded');
-console.log(`   Environment: ${config.NODE_ENV}`);
-console.log(`   Port: ${config.PORT}`);
-console.log(`   Server URL: ${config.SERVER_URL}`);
-console.log(`   Database Path: ${config.DATABASE_PATH}`);
-console.log(`   Descope Project ID: ${config.DESCOPE_PROJECT_ID.substring(0, 8)}...`);
+// Create Express app
+const app = express();
 
-// Server setup will be added in Phase 1
-console.log('\n✅ Phase 0 Complete - Configuration working!');
-console.log('   Run Phase 1 to set up Express server with MCP wrapper.');
+// ===================
+// Security Middleware
+// ===================
+app.use(helmet({
+    contentSecurityPolicy: config.NODE_ENV === 'production',
+}));
+
+// ===================
+// CORS Configuration
+// ===================
+app.use(cors({
+    origin: config.CORS_ORIGIN === '*' ? '*' : config.CORS_ORIGIN.split(','),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
+
+// ===================
+// Request Parsing
+// ===================
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// ===================
+// Request Logging
+// ===================
+if (config.NODE_ENV !== 'test') {
+    app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
+}
+
+// ===================
+// Health Check (before auth)
+// ===================
+app.get('/health', (_req, res) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        environment: config.NODE_ENV,
+    });
+});
+
+// ===================
+// MCP Server Endpoint
+// ===================
+// The MCP router handles:
+// - POST /mcp - MCP protocol endpoint (requires Bearer token)
+// - GET /.well-known/oauth-protected-resource - Resource metadata
+// - GET /.well-known/oauth-authorization-server - Auth server metadata
+app.use(createMcpRouter());
+
+// ===================
+// REST API Endpoints
+// ===================
+app.use('/api', apiRouter);
+
+// ===================
+// Error Handling
+// ===================
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+// ===================
+// Start Server
+// ===================
+const PORT = config.PORT;
+
+app.listen(PORT, () => {
+    console.log('\n🚀 Expense Management Server Started');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`   Environment:     ${config.NODE_ENV}`);
+    console.log(`   Server URL:      ${config.SERVER_URL}`);
+    console.log(`   Health Check:    ${config.SERVER_URL}/health`);
+    console.log('');
+    console.log('   📡 MCP Endpoint:');
+    console.log(`      POST ${config.SERVER_URL}/mcp`);
+    console.log('');
+    console.log('   🌐 REST API:');
+    console.log(`      ${config.SERVER_URL}/api`);
+    console.log('');
+    console.log('   🔐 OAuth Metadata:');
+    console.log(`      ${config.SERVER_URL}/.well-known/oauth-protected-resource`);
+    console.log(`      ${config.SERVER_URL}/.well-known/oauth-authorization-server`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('Received SIGTERM, shutting down gracefully...');
+    process.exit(0);
+});
+
+process.on('SIGINT', () => {
+    console.log('Received SIGINT, shutting down gracefully...');
+    process.exit(0);
+});
+
+export { app };
