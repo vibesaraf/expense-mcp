@@ -8,6 +8,20 @@ import { config } from './config';
 import { createMcpRouter } from './mcp';
 import { apiRouter } from './api';
 import { errorHandler, notFoundHandler } from './middleware';
+import { isDatabaseInitialized, getDb } from './db';
+import { createTables } from './db/schema';
+
+// Initialize database
+if (!isDatabaseInitialized()) {
+    console.log('📦 Initializing database...');
+    createTables();
+    console.log('💡 Run `bun run db:seed` to populate with sample data');
+} else {
+    // Verify database connection
+    const db = getDb();
+    const userCount = (db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number }).count;
+    console.log(`📦 Database connected (${userCount} users)`);
+}
 
 // Create Express app
 const app = express();
