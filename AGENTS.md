@@ -7,7 +7,7 @@
 **Expense Management System** - A Model Context Protocol (MCP) enabled expense tracking application built with modern TypeScript tooling.
 
 - **Architecture**: Turborepo monorepo
-- **Current Phase**: Phase 1 (Express server with MCP wrapper setup)
+- **Current Phase**: Phase 3 (Database repository layer complete)
 - **Repository Structure**: Workspaces (`apps/*`, `packages/*`)
 
 ---
@@ -15,6 +15,7 @@
 ## Technology Stack
 
 ### Core Technologies
+
 - **Runtime**: Node.js >=18
 - **Package Manager**: Bun 1.3.6
 - **Monorepo Tool**: Turborepo 2.8.2
@@ -22,6 +23,7 @@
 - **Module System**: ES Modules (`"type": "module"`)
 
 ### Backend Stack
+
 - **Framework**: Express 5.2.1
 - **Authentication**: Descope Node SDK + MCP Express wrapper
 - **MCP Protocol**: @modelcontextprotocol/sdk 1.25.3
@@ -31,10 +33,12 @@
 - **Logging**: Morgan (HTTP request logger)
 
 ### Frontend Stack (Shared UI Package)
+
 - **UI Library**: React 19.2.0
 - **Component Library**: Custom shared components (@expense/ui)
 
 ### Code Quality
+
 - **Linting**: ESLint 9.39.1
 - **Formatting**: Prettier 3.7.4
 - **Type Checking**: TypeScript strict mode
@@ -46,6 +50,7 @@
 ### Apps Workspace (`apps/*`)
 
 #### `apps/expenses-server`
+
 - **Type**: Node.js Express backend
 - **Purpose**: Main server with MCP and REST API endpoints
 - **Module Type**: ES Modules
@@ -57,6 +62,7 @@
   - Descope authentication integration
 
 **Directory Structure**:
+
 ```
 apps/expenses-server/
 ├── src/
@@ -67,6 +73,7 @@ apps/expenses-server/
 │   │   ├── constants.ts        # App constants (roles, statuses, scopes)
 │   │   └── descope.ts          # Descope auth client & MCP provider
 │   ├── db/                     # Database setup and seed scripts
+│   │   └── repositories/       # Database repository layer (users, categories, expenses, approvals, audit)
 │   ├── mcp/                    # MCP server tools and handlers
 │   │   └── index.ts            # MCP router and tool registration
 │   ├── middleware/             # Express middleware
@@ -87,6 +94,7 @@ apps/expenses-server/
 ```
 
 **Scripts**:
+
 - `bun run dev` - Development mode with tsx watch
 - `bun run build` - TypeScript compilation
 - `bun run start` - Run production build
@@ -98,6 +106,7 @@ apps/expenses-server/
 ### Packages Workspace (`packages/*`)
 
 #### `packages/typescript-config`
+
 - **Package Name**: `@expense/typescript-config`
 - **Purpose**: Shared TypeScript configurations
 - **Exports**:
@@ -106,6 +115,7 @@ apps/expenses-server/
   - `nextjs.json` - Next.js-specific config
 
 #### `packages/eslint-config`
+
 - **Package Name**: `@expense/eslint-config`
 - **Purpose**: Shared ESLint configurations
 - **Exports**:
@@ -114,6 +124,7 @@ apps/expenses-server/
   - `next.js` - Next.js-specific rules
 
 #### `packages/ui`
+
 - **Package Name**: `@expense/ui`
 - **Purpose**: Shared React component library
 - **Components**: Button, Card, Code
@@ -151,11 +162,13 @@ apps/expenses-server/
 ```
 
 ### Task Dependencies
+
 - `^` prefix means "run this task in dependencies first"
 - Example: `build` depends on `^build` (all deps must build first)
 - `dev` runs in persistent mode (doesn't cache)
 
 ### Root Scripts
+
 ```bash
 # Run all builds across workspaces
 bun run build
@@ -233,11 +246,11 @@ This project uses **ES Modules** exclusively:
 
 ```typescript
 // ✅ CORRECT - Use ES module syntax
-import express from 'express';
+import express from "express";
 export const app = express();
 
 // ❌ WRONG - Do not use CommonJS
-const express = require('express');
+const express = require("express");
 module.exports = app;
 ```
 
@@ -278,19 +291,20 @@ src/
 Always use Descope for authentication:
 
 ```typescript
-import { descopeClient, descopeMcpProvider } from '../config/descope';
-import { authMiddleware } from '../middleware';
+import { descopeClient, descopeMcpProvider } from "../config/descope";
+import { authMiddleware } from "../middleware";
 
 // For REST API routes
-app.get('/api/expenses', authMiddleware, handler);
+app.get("/api/expenses", authMiddleware, handler);
 
 // For MCP endpoints
 // The createMcpRouter() automatically uses descopeMcpProvider
-import { createMcpRouter } from '../mcp';
+import { createMcpRouter } from "../mcp";
 app.use(createMcpRouter());
 ```
 
 **Key Modules**:
+
 - [config/descope.ts](apps/expenses-server/src/config/descope.ts) - Descope client and MCP provider initialization
 - [middleware/auth.middleware.ts](apps/expenses-server/src/middleware/auth.middleware.ts) - JWT validation middleware
 - [middleware/rbac.middleware.ts](apps/expenses-server/src/middleware/rbac.middleware.ts) - Role-based access control
@@ -304,7 +318,7 @@ Use structured error handling with the global error middleware:
 // Throw standard errors or create custom error classes in utils/errors.ts
 
 // Standard error throwing
-throw new Error('Something went wrong');
+throw new Error("Something went wrong");
 
 // Or use custom error classes when available:
 // import { UnauthorizedError, ForbiddenError, NotFoundError } from '../utils/errors';
@@ -316,6 +330,7 @@ throw new Error('Something went wrong');
 ```
 
 **Error Middleware Features**:
+
 - Catches all errors in the application
 - Formats errors consistently
 - Logs errors in non-production environments
@@ -345,18 +360,21 @@ export async function getExpense(id) {
 ### Adding a New Package
 
 **To Apps:**
+
 ```bash
 cd apps/expenses-server
 bun add new-package-name
 ```
 
 **To Shared Packages:**
+
 ```bash
 cd packages/ui
 bun add new-package-name
 ```
 
 **Root-level dev dependencies:**
+
 ```bash
 # From project root
 bun add -d new-dev-tool
@@ -419,43 +437,46 @@ The application uses several middleware layers for security and functionality:
 
 ```typescript
 // src/index.ts - Middleware order is important!
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import { errorHandler, notFoundHandler } from './middleware';
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import { errorHandler, notFoundHandler } from "./middleware";
 
 const app = express();
 
 // 1. Security first
-app.use(helmet({ contentSecurityPolicy: config.NODE_ENV === 'production' }));
+app.use(helmet({ contentSecurityPolicy: config.NODE_ENV === "production" }));
 
 // 2. CORS configuration
-app.use(cors({
-  origin: config.CORS_ORIGIN === '*' ? '*' : config.CORS_ORIGIN.split(','),
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: config.CORS_ORIGIN === "*" ? "*" : config.CORS_ORIGIN.split(","),
+    credentials: true,
+  }),
+);
 
 // 3. Request parsing
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // 4. Logging (skip in tests)
-if (config.NODE_ENV !== 'test') {
-  app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
+if (config.NODE_ENV !== "test") {
+  app.use(morgan(config.NODE_ENV === "production" ? "combined" : "dev"));
 }
 
 // 5. Routes (public first, then protected)
-app.get('/health', healthHandler);
+app.get("/health", healthHandler);
 app.use(createMcpRouter()); // MCP with its own auth
-app.use('/api', apiRouter);   // REST API routes
+app.use("/api", apiRouter); // REST API routes
 
 // 6. Error handling (MUST be last)
-app.use(notFoundHandler);  // 404 handler
-app.use(errorHandler);     // Global error handler
+app.use(notFoundHandler); // 404 handler
+app.use(errorHandler); // Global error handler
 ```
 
 **Available Middleware**:
+
 - `authMiddleware` - Validates JWT and extracts user info (required)
 - `optionalAuthMiddleware` - Validates JWT if present (optional auth)
 - `requireRoles(...roles)` - Checks if user has one of the specified roles
@@ -468,42 +489,44 @@ app.use(errorHandler);     // Global error handler
 ### REST API Endpoints
 
 ```typescript
-import { Router } from 'express';
-import type { Request, Response } from 'express';
-import { authMiddleware, requireRoles } from '../middleware';
-import { UserRoles } from '../config/constants';
+import { Router } from "express";
+import type { Request, Response } from "express";
+import { authMiddleware, requireRoles } from "../middleware";
+import { UserRoles } from "../config/constants";
 
 const router = Router();
 
 // Public endpoint
-router.get('/health', (_req: Request, res: Response) => {
+router.get("/health", (_req: Request, res: Response) => {
   res.json({
     success: true,
-    data: { status: 'healthy', timestamp: new Date().toISOString() }
+    data: { status: "healthy", timestamp: new Date().toISOString() },
   });
 });
 
 // Authenticated endpoint
-router.get('/expenses', authMiddleware, async (req: Request, res: Response) => {
+router.get("/expenses", authMiddleware, async (req: Request, res: Response) => {
   // req.user contains authenticated user info
   const userId = req.user?.userId;
   // ... fetch expenses
 });
 
 // Role-protected endpoint
-router.post('/expenses/approve/:id',
+router.post(
+  "/expenses/approve/:id",
   authMiddleware,
   requireRoles(UserRoles.MANAGER, UserRoles.FINANCE_ADMIN),
   async (req: Request, res: Response) => {
     // Only managers and finance admins can access
     const { id } = req.params;
     // ... approve expense
-  }
+  },
 );
 ```
 
 **Response Format**:
 All API responses follow a consistent format:
+
 ```typescript
 // Success response
 {
@@ -528,9 +551,9 @@ The MCP server is configured using Descope MCP Express wrapper:
 
 ```typescript
 // src/mcp/index.ts
-import { descopeMcpAuthRouter } from '@descope/mcp-express';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { descopeMcpProvider } from '../config/descope';
+import { descopeMcpAuthRouter } from "@descope/mcp-express";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { descopeMcpProvider } from "../config/descope";
 
 function registerTools(server: McpServer): void {
   // Tools will be registered here in Phase 6
@@ -544,6 +567,7 @@ export function createMcpRouter() {
 ```
 
 **MCP Endpoints**:
+
 - `POST /mcp` - Main MCP protocol endpoint (requires Bearer token)
 - `GET /.well-known/oauth-protected-resource` - OAuth resource metadata
 - `GET /.well-known/oauth-authorization-server` - OAuth server metadata
@@ -552,25 +576,29 @@ MCP tools implementation is planned for Phase 6.
 
 ### Database Queries
 
+Use the repository layer (Phase 3) instead of raw queries for application code:
+
 ```typescript
-import { db } from '../db';
+import { expenseRepository, userRepository } from "../db/repositories";
+import { ExpenseStatus } from "../config/constants";
 
-// Query with params
-const expense = db.prepare(
-  'SELECT * FROM expenses WHERE expense_id = ?'
-).get(expenseId);
-
-// Insert
-const result = db.prepare(`
-  INSERT INTO expenses (expense_id, submitter_id, amount, description)
-  VALUES (?, ?, ?, ?)
-`).run(id, userId, amount, description);
-
-// Transaction
-const transfer = db.transaction(() => {
-  // Multiple operations
+// Fetch a user and their expenses
+const user = userRepository.findById("user_alice_employee");
+const expenses = expenseRepository.listByUser(user!.userId, {
+  status: [ExpenseStatus.PENDING, ExpenseStatus.APPROVED],
 });
-transfer();
+
+// Create a new expense
+const created = expenseRepository.create(user!.userId, {
+  amount: 120,
+  currency: "USD",
+  description: "Client lunch",
+  expenseDate: "2026-02-05",
+  categoryId: 1,
+});
+
+// Approve it
+expenseRepository.updateStatus(created.expenseId, ExpenseStatus.APPROVED);
 ```
 
 ---
@@ -578,9 +606,11 @@ transfer();
 ## Testing Strategy
 
 ### Current Status
+
 Tests not yet implemented (planned for later phases).
 
 ### Planned Testing Approach
+
 - **Unit Tests**: Vitest
 - **Integration Tests**: Supertest for API
 - **E2E Tests**: Playwright (for UI)
@@ -597,9 +627,10 @@ Tests not yet implemented (planned for later phases).
 4. Apply in `src/index.ts`
 
 **Example**:
+
 ```typescript
 // src/middleware/my-middleware.ts
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from "express";
 
 export function myMiddleware(req: Request, res: Response, next: NextFunction) {
   // Middleware logic
@@ -607,10 +638,10 @@ export function myMiddleware(req: Request, res: Response, next: NextFunction) {
 }
 
 // src/middleware/index.ts
-export { myMiddleware } from './my-middleware';
+export { myMiddleware } from "./my-middleware";
 
 // src/index.ts
-import { myMiddleware } from './middleware';
+import { myMiddleware } from "./middleware";
 app.use(myMiddleware);
 ```
 
@@ -643,12 +674,14 @@ cd packages/eslint-config
 ## Troubleshooting
 
 ### Bun Lock Issues
+
 ```bash
 rm bun.lockb
 bun install
 ```
 
 ### Type Errors
+
 ```bash
 # Check types across entire monorepo
 bun run check-types
@@ -659,6 +692,7 @@ bun run typecheck
 ```
 
 ### Turbo Cache Issues
+
 ```bash
 # Clear Turbo cache
 rm -rf .turbo
@@ -666,6 +700,7 @@ bun run build
 ```
 
 ### Database Issues
+
 ```bash
 cd apps/expenses-server
 
@@ -682,12 +717,14 @@ bun run db:seed
 ## Project Phases
 
 ### Phase 0: ✅ Completed
+
 - Project initialization
 - Directory structure
 - Shared configurations
 - Monorepo setup
 
 ### Phase 1: ✅ Completed
+
 - Express server setup with Helmet, CORS, Morgan
 - MCP wrapper integration with Descope authentication
 - Middleware implementation (auth, RBAC, error handling, audit)
@@ -696,12 +733,19 @@ bun run db:seed
 - Server entry point with graceful shutdown
 
 ### Phase 2: ✅ Completed
+
 - Database design
 - SQLite setup
 - Seed data
 
-### Phase 3+: 📋 Planned
-- Database layer
+### Phase 3: ✅ Completed
+
+- Database repository layer (Base, User, Category, Expense, Approval, Audit)
+- Pagination, filtering, and summaries for expenses
+- Audit logging helpers and approval history utilities
+
+### Phase 4+: 📋 Planned
+
 - REST API implementation
 - MCP tools implementation
 - Testing
@@ -712,6 +756,7 @@ bun run db:seed
 ## Important URLs & Endpoints
 
 ### Development Server
+
 - **Base URL**: `http://localhost:3000`
 - **Health Check**: `GET /health` (public, server-level)
 - **API Health**: `GET /api/health` (API-level health check)
@@ -722,6 +767,7 @@ bun run db:seed
 - **OAuth Server Metadata**: `GET /.well-known/oauth-authorization-server`
 
 ### Documentation
+
 - **AI Agent Guide**: `AGENTS.md` (this file - comprehensive AI agent guidance)
 - **Agent Update Instructions**: `.agents/update-agents-doc.md` (how to update this file)
 - **Phase 1 Guide**: `PHASE-1.md` (Phase 1 implementation documentation)
@@ -733,6 +779,7 @@ bun run db:seed
 ## External Resources
 
 ### Documentation Links
+
 - [Turborepo Docs](https://turbo.build/repo/docs)
 - [Bun Documentation](https://bun.sh/docs)
 - [Descope MCP Express](https://github.com/descope/descope-mcp-express)
@@ -741,6 +788,7 @@ bun run db:seed
 - [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
 
 ### Package Registries
+
 - **NPM**: https://www.npmjs.com/
 - **Bun**: https://bun.sh/packages
 
@@ -749,12 +797,14 @@ bun run db:seed
 ## AI Agent Quick Reference
 
 ### Before Adding Any Package
+
 1. Navigate to correct workspace: `cd apps/expenses-server` or `cd packages/ui`
 2. Run: `bun add package-name` (NO version number)
 3. Let Bun automatically install the latest compatible version
 4. Only specify version if there's a specific compatibility requirement
 
 ### Before Making Changes
+
 1. Read existing code in the area you're modifying
 2. Follow established patterns
 3. Maintain type safety
@@ -762,6 +812,7 @@ bun run db:seed
 5. Test changes with `bun run dev`
 
 ### Common Commands Cheatsheet
+
 ```bash
 # Install dependencies (root)
 bun install
@@ -787,5 +838,5 @@ cd apps/expenses-server && bun run db:reset
 
 ---
 
-**Last Updated**: 2026-02-04
-**Current Phase**: Phase 2 Complete - Phase 3 Next (Database Layer)
+**Last Updated**: 2026-02-05
+**Current Phase**: Phase 3 Complete - Phase 4 Next (REST API, MCP tools, testing)
