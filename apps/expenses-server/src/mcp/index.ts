@@ -1,19 +1,28 @@
-import { descopeMcpAuthRouter } from '@descope/mcp-express';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { descopeMcpProvider } from '../config/descope';
+import { descopeMcpAuthRouter } from "@descope/mcp-express";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { descopeMcpProvider } from "../config/descope";
 import type { RequestHandler } from 'express';
+import {
+    submitExpenseTool,
+    listMyExpensesTool,
+    listTeamExpensesTool,
+    approveExpenseTool,
+    rejectExpenseTool,
+    generateReportTool,
+} from "./tools";
 
 /**
  * Register all MCP tools
  * Tools will be implemented in Phase 6
  */
 function registerTools(server: McpServer): void {
-    // Placeholder - tools will be registered in Phase 6
-    console.log('📦 MCP Tools registration placeholder');
-    console.log('   Tools will be implemented in Phase 6');
-
-    // For now, we'll just log that the server is ready
-    // The actual tool implementations will be added in Phase 6
+    // Register all tools
+    submitExpenseTool(server);
+    listMyExpensesTool(server);
+    listTeamExpensesTool(server);
+    approveExpenseTool(server);
+    rejectExpenseTool(server);
+    generateReportTool(server);
 }
 
 /**

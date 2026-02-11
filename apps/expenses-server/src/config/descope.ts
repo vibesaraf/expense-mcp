@@ -24,6 +24,17 @@ export const descopeMcpProvider = new DescopeMcpProvider({
         // All scopes that our MCP server supports
         requiredScopes: [], // Don't require any scopes by default, check per-tool
     },
+    dynamicClientRegistrationOptions: {
+        authPageUrl: `https://api.descope.com/login/${config.DESCOPE_PROJECT_ID}?flow=inbound-apps-user-consent`,
+        permissionScopes: [
+            { name: "openid", description: "Basic identity information" },
+            { name: "profile", description: "User profile information" },
+            { name: "email", description: "User email address" },
+            { name: "phone", description: "User phone number" },
+            { name: "address", description: "User address information" },
+            { name: "offline_access", description: "Refresh tokens" },
+        ],
+    },
 });
 
 /**
