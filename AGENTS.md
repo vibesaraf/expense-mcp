@@ -67,6 +67,9 @@
 apps/expenses-server/
 ├── src/
 │   ├── api/                    # REST API routes
+│   │   ├── controllers/        # Request handlers
+│   │   ├── routes/             # Route definitions
+│   │   ├── validators/         # Request validation schemas
 │   │   └── index.ts            # API router with health and info endpoints
 │   ├── config/                 # Configuration
 │   │   ├── index.ts            # Main config (env variables)
@@ -82,6 +85,10 @@ apps/expenses-server/
 │   │   ├── error.middleware.ts # Global error & 404 handlers
 │   │   ├── audit.middleware.ts # Audit logging middleware
 │   │   └── index.ts            # Middleware exports
+│   ├── services/               # Business logic layer
+│   │   ├── expense.service.ts  # Expense business logic
+│   │   ├── report.service.ts   # Report generation logic
+│   │   └── index.ts            # Service exports
 │   ├── types/                  # TypeScript type definitions
 │   │   ├── api.types.ts        # API request/response types
 │   │   ├── auth.types.ts       # Auth & user types
@@ -744,9 +751,15 @@ bun run db:seed
 - Pagination, filtering, and summaries for expenses
 - Audit logging helpers and approval history utilities
 
-### Phase 4+: 📋 Planned
+### Phase 4: ✅ Completed
 
 - REST API implementation
+- Controllers, Services, Validators
+- Expenses, Reports, and Categories endpoints
+- RBAC and Audit integration
+
+### Phase 5+: 📋 Planned
+
 - MCP tools implementation
 - Testing
 - Documentation

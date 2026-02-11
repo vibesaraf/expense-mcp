@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+import { expenseRouter, categoryRouter, reportRouter } from './routes';
 
-const apiRouter = Router();
+const apiRouter: Router = Router();
 
 /**
  * API Health check endpoint
@@ -35,5 +36,10 @@ apiRouter.get('/', (_req: Request, res: Response) => {
         },
     });
 });
+
+// Register routes
+apiRouter.use('/expenses/reports', reportRouter); // Must be before /expenses
+apiRouter.use('/expenses', expenseRouter);
+apiRouter.use('/categories', categoryRouter);
 
 export { apiRouter };

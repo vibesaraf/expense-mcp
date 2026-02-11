@@ -1,0 +1,73 @@
+# Expense Management API - Curl Request Collection
+# Base URL: http://localhost:3000
+
+# ==========================================
+# 1. Categories
+# ==========================================
+
+# List all categories
+curl --location 'http://localhost:3000/api/categories' \
+--header 'Content-Type: application/json'
+
+# ==========================================
+# 2. Expenses
+# ==========================================
+
+# Submit a new expense
+curl --location 'http://localhost:3000/api/expenses' \
+--header 'Content-Type: application/json' \
+--data '{
+    "categoryId": 1,
+    "amount": 42.50,
+    "currency": "USD",
+    "description": "Lunch with client at Downtown Cafe",
+    "expenseDate": "2023-10-27"
+}'
+
+# List my expenses (User's own)
+curl --location 'http://localhost:3000/api/expenses/me?page=1&limit=10' \
+--header 'Content-Type: application/json'
+
+# List team expenses (Manager only)
+# Replace :teamId with actual team ID (e.g., 'marketing')
+curl --location 'http://localhost:3000/api/expenses/team/marketing?page=1&limit=10' \
+--header 'Content-Type: application/json'
+
+# List all expenses (Finance Admin only)
+curl --location 'http://localhost:3000/api/expenses/all?page=1&limit=10' \
+--header 'Content-Type: application/json'
+
+# Get expense details
+# Replace :expenseId with actual expense ID
+curl --location 'http://localhost:3000/api/expenses/123' \
+--header 'Content-Type: application/json'
+
+# Approve an expense (Manager/Admin)
+# Replace :expenseId with actual expense ID
+curl --location 'http://localhost:3000/api/expenses/123/approve' \
+--header 'Content-Type: application/json' \
+--data '{
+    "notes": "Approved within budget"
+}'
+
+# Reject an expense (Manager/Admin)
+# Replace :expenseId with actual expense ID
+curl --location 'http://localhost:3000/api/expenses/123/reject' \
+--header 'Content-Type: application/json' \
+--data '{
+    "reason": "Expense amount exceeds the daily limit policy."
+}'
+
+# ==========================================
+# 3. Reports
+# ==========================================
+
+# Generate Expense Report (Finance Admin only)
+curl --location 'http://localhost:3000/api/expenses/reports/generate' \
+--header 'Content-Type: application/json' \
+--data '{
+    "fromDate": "2023-10-01",
+    "toDate": "2023-10-31",
+    "reportType": "summary",
+    "format": "json"
+}'
