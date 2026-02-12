@@ -1,26 +1,28 @@
-import 'dotenv/config';
-import express, { type Express } from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
+import "dotenv/config";
+import express, { type Express } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
 
-import { config } from './config';
-import { createMcpRouter } from './mcp';
-import { apiRouter } from './api';
-import { errorHandler, notFoundHandler } from './middleware';
-import { isDatabaseInitialized, getDb } from './db';
-import { createTables } from './db/schema';
+import { config } from "./config";
+import { createMcpRouter } from "./mcp";
+import { apiRouter } from "./api";
+import { errorHandler, notFoundHandler } from "./middleware";
+import { isDatabaseInitialized, getDb } from "./db";
+import { createTables } from "./db/schema";
 
 // Initialize database
 if (!isDatabaseInitialized()) {
-    console.log('📦 Initializing database...');
-    createTables();
-    console.log('💡 Run `bun run db:seed` to populate with sample data');
+  console.log("📦 Initializing database...");
+  createTables();
+  console.log("💡 Run `bun run db:seed` to populate with sample data");
 } else {
-    // Verify database connection
-    const db = getDb();
-    const userCount = (db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number }).count;
-    console.log(`📦 Database connected (${userCount} users)`);
+  // Verify database connection
+  const db = getDb();
+  const userCount = (
+    db.prepare("SELECT COUNT(*) as count FROM users").get() as { count: number }
+  ).count;
+  console.log(`📦 Database connected (${userCount} users)`);
 }
 
 // Create Express app
@@ -29,42 +31,60 @@ const app: Express = express();
 // ===================
 // Security Middleware
 // ===================
-app.use(helmet({
-    contentSecurityPolicy: config.NODE_ENV === 'production',
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: config.NODE_ENV === "production",
+  }),
+);
 
 // ===================
 // CORS Configuration
 // ===================
-app.use(cors({
-    origin: config.CORS_ORIGIN === '*' ? '*' : config.CORS_ORIGIN.split(','),
+app.use(
+  cors({
+    origin: config.CORS_ORIGIN === "*" ? "*" : config.CORS_ORIGIN.split(","),
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  }),
+);
 
 // ===================
 // Request Parsing
 // ===================
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // ===================
 // Request Logging
 // ===================
-if (config.NODE_ENV !== 'test') {
-    app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
+if (config.NODE_ENV !== "test") {
+  app.use(morgan(config.NODE_ENV === "production" ? "combined" : "dev"));
 }
 
 // ===================
 // Health Check (before auth)
 // ===================
-app.get('/health', (_req, res) => {
-    res.json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        environment: config.NODE_ENV,
-    });
+app.get("/health", (_req, res) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    environment: config.NODE_ENV,
+  });
+});
+
+// ===================
+// OAuth Metadata (public)
+// ===================
+app.get("/.well-known/oauth-protected-resource", (_req, res) => {
+  try {
+    const metadata = JSON.parse(config.PROTECTED_RESOURCE_METADATA);
+    res.type("application/json").send(JSON.stringify(metadata, null, 2));
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Failed to load protected resource metadata" });
+  }
 });
 
 // ===================
@@ -72,14 +92,13 @@ app.get('/health', (_req, res) => {
 // ===================
 // The MCP router handles:
 // - POST /mcp - MCP protocol endpoint (requires Bearer token)
-// - GET /.well-known/oauth-protected-resource - Resource metadata
-// - GET /.well-known/oauth-authorization-server - Auth server metadata
+// - GET /.well-known/oauth-authorization-server - Auth server metadata (if supported)
 app.use(createMcpRouter());
 
 // ===================
 // REST API Endpoints
 // ===================
-app.use('/api', apiRouter);
+app.use("/api", apiRouter);
 
 // ===================
 // Error Handling
@@ -93,33 +112,37 @@ app.use(errorHandler);
 const PORT = config.PORT;
 
 app.listen(PORT, () => {
-    console.log('\n🚀 Expense Management Server Started');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`   Environment:     ${config.NODE_ENV}`);
-    console.log(`   Server URL:      ${config.SERVER_URL}`);
-    console.log(`   Health Check:    ${config.SERVER_URL}/health`);
-    console.log('');
-    console.log('   📡 MCP Endpoint:');
-    console.log(`      POST ${config.SERVER_URL}/mcp`);
-    console.log('');
-    console.log('   🌐 REST API:');
-    console.log(`      ${config.SERVER_URL}/api`);
-    console.log('');
-    console.log('   🔐 OAuth Metadata:');
-    console.log(`      ${config.SERVER_URL}/.well-known/oauth-protected-resource`);
-    console.log(`      ${config.SERVER_URL}/.well-known/oauth-authorization-server`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  console.log("\n🚀 Expense Management Server Started");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log(`   Environment:     ${config.NODE_ENV}`);
+  console.log(`   Server URL:      ${config.SERVER_URL}`);
+  console.log(`   Health Check:    ${config.SERVER_URL}/health`);
+  console.log("");
+  console.log("   📡 MCP Endpoint:");
+  console.log(`      POST ${config.SERVER_URL}/mcp`);
+  console.log("");
+  console.log("   🌐 REST API:");
+  console.log(`      ${config.SERVER_URL}/api`);
+  console.log("");
+  console.log("   🔐 OAuth Metadata:");
+  console.log(
+    `      ${config.SERVER_URL}/.well-known/oauth-protected-resource`,
+  );
+  console.log(
+    `      ${config.SERVER_URL}/.well-known/oauth-authorization-server`,
+  );
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 });
 
 // Handle graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('Received SIGTERM, shutting down gracefully...');
-    process.exit(0);
+process.on("SIGTERM", () => {
+  console.log("Received SIGTERM, shutting down gracefully...");
+  process.exit(0);
 });
 
-process.on('SIGINT', () => {
-    console.log('Received SIGINT, shutting down gracefully...');
-    process.exit(0);
+process.on("SIGINT", () => {
+  console.log("Received SIGINT, shutting down gracefully...");
+  process.exit(0);
 });
 
 export { app };

@@ -1,291 +1,302 @@
 import {
-    expenseRepository,
-    categoryRepository,
-    userRepository,
-    approvalRepository,
-    auditRepository,
-    type ExpenseFilters
-} from '../db/repositories';
+  expenseRepository,
+  categoryRepository,
+  userRepository,
+  approvalRepository,
+  auditRepository,
+  type ExpenseFilters,
+} from "../db/repositories";
 import type {
-    Expense,
-    ExpenseWithSubmitter,
-    ExpenseWithApprovalHistory,
-    CreateExpenseInput
-} from '../types/expense.types';
-import type { AuthenticatedUser } from '../types/auth.types';
+  Expense,
+  ExpenseWithSubmitter,
+  ExpenseWithApprovalHistory,
+  CreateExpenseInput,
+} from "../types/expense.types";
+import type { AuthenticatedUser } from "../types/auth.types";
 import {
-    NotFoundError,
-    ValidationError,
-    ForbiddenError,
-    ConflictError
-} from '../utils/errors';
-import { ExpenseStatus, UserRoles } from '../config/constants';
-import { isFinanceAdmin, isManagerOrHigher } from '../middleware/rbac.middleware';
+  NotFoundError,
+  ValidationError,
+  ForbiddenError,
+  ConflictError,
+} from "../utils/errors";
+import { ExpenseStatus, UserRoles } from "../config/constants";
+import {
+  isFinanceAdmin,
+  isManagerOrHigher,
+} from "../middleware/rbac.middleware";
 
 export class ExpenseService {
-    /**
-     * Submit a new expense
-     */
-    async submitExpense(
-        user: AuthenticatedUser,
-        input: CreateExpenseInput
-    ): Promise<ExpenseWithSubmitter> {
-        // Validate category exists
-        const category = categoryRepository.findById(input.categoryId);
-        if (!category) {
-            throw new NotFoundError('Category', input.categoryId.toString());
-        }
-
-        // Check amount limit
-        if (!categoryRepository.isAmountWithinLimit(input.categoryId, input.amount)) {
-            throw new ValidationError(
-                `Amount exceeds category limit of ${category.maxAmount}`,
-                { maxAmount: category.maxAmount, providedAmount: input.amount }
-            );
-        }
-
-        // Check if receipt is required
-        if (categoryRepository.requiresReceipt(input.categoryId) && !input.receiptUrl) {
-            throw new ValidationError(
-                `Receipt is required for category '${category.categoryName}'`,
-                { categoryName: category.categoryName }
-            );
-        }
-
-        // Ensure user exists in local DB (sync from Descope if needed)
-        let dbUser = userRepository.findById(user.userId);
-        if (!dbUser) {
-            // Create user in local DB
-            dbUser = userRepository.create({
-                userId: user.userId,
-                email: user.email,
-                fullName: user.name || user.email,
-                role: user.roles[0] || UserRoles.EMPLOYEE,
-                department: user.department,
-            });
-        }
-
-        // Create the expense
-        const expense = expenseRepository.create(user.userId, input);
-
-        // Log audit
-        auditRepository.create({
-            userId: user.userId,
-            action: 'expense:submit',
-            resourceType: 'expense',
-            resourceId: expense.expenseId,
-            details: { amount: input.amount, categoryId: input.categoryId },
-        });
-
-        return expenseRepository.findByIdWithSubmitter(expense.expenseId)!;
+  /**
+   * Submit a new expense
+   */
+  async submitExpense(
+    user: AuthenticatedUser,
+    input: CreateExpenseInput,
+  ): Promise<ExpenseWithSubmitter> {
+    // Validate category exists
+    const category = categoryRepository.findById(input.categoryId);
+    if (!category) {
+      throw new NotFoundError("Category", input.categoryId.toString());
     }
 
-    /**
-     * Get user's own expenses
-     */
-    async getMyExpenses(
-        user: AuthenticatedUser,
-        filters: Omit<ExpenseFilters, 'submitterId'>
+    // Check amount limit
+    if (
+      !categoryRepository.isAmountWithinLimit(input.categoryId, input.amount)
     ) {
-        return expenseRepository.listByUser(user.userId, filters);
+      throw new ValidationError(
+        `Amount exceeds category limit of ${category.maxAmount}`,
+        { maxAmount: category.maxAmount, providedAmount: input.amount },
+      );
     }
 
-    /**
-     * Get team expenses (for managers)
-     */
-    async getTeamExpenses(
-        user: AuthenticatedUser,
-        teamId: string | undefined,
-        filters: Omit<ExpenseFilters, 'submitterId'>
+    // Check if receipt is required
+    if (
+      categoryRepository.requiresReceipt(input.categoryId) &&
+      !input.receiptUrl
     ) {
-        // If no teamId provided, use user as manager
-        const managerId = teamId || user.userId;
-
-        // If user is not finance admin and trying to view another team, verify they are the manager
-        if (!isFinanceAdmin(user) && managerId !== user.userId) {
-            throw new ForbiddenError('You can only view your own team expenses');
-        }
-
-        return expenseRepository.listByTeam(managerId, filters);
+      throw new ValidationError(
+        `Receipt is required for category '${category.categoryName}'`,
+        { categoryName: category.categoryName },
+      );
     }
 
-    /**
-     * Get all expenses (for finance admin)
-     */
-    async getAllExpenses(
-        user: AuthenticatedUser,
-        filters: ExpenseFilters
-    ) {
-        // Finance admins can see all
-        if (!isFinanceAdmin(user)) {
-            throw new ForbiddenError('Only finance admins can view all expenses');
-        }
-
-        return expenseRepository.list(filters);
+    // Ensure user exists in local DB (sync from auth provider if needed)
+    let dbUser = userRepository.findById(user.userId);
+    if (!dbUser) {
+      // Create user in local DB
+      dbUser = userRepository.create({
+        userId: user.userId,
+        email: user.email,
+        fullName: user.name || user.email,
+        role: user.roles[0] || UserRoles.EMPLOYEE,
+        department: user.department,
+      });
     }
 
-    /**
-     * Get expense details with approval history
-     */
-    async getExpenseDetails(
-        user: AuthenticatedUser,
-        expenseId: string
-    ): Promise<ExpenseWithApprovalHistory> {
-        const expense = expenseRepository.findByIdWithSubmitter(expenseId);
-        if (!expense) {
-            throw new NotFoundError('Expense', expenseId);
-        }
+    // Create the expense
+    const expense = expenseRepository.create(user.userId, input);
 
-        // Check access
-        const canView = await this.canViewExpense(user, expense);
-        if (!canView) {
-            throw new ForbiddenError('You do not have permission to view this expense');
-        }
+    // Log audit
+    auditRepository.create({
+      userId: user.userId,
+      action: "expense:submit",
+      resourceType: "expense",
+      resourceId: expense.expenseId,
+      details: { amount: input.amount, categoryId: input.categoryId },
+    });
 
-        // Get approval history
-        const approvalHistory = approvalRepository.getApprovalHistory(expenseId);
+    return expenseRepository.findByIdWithSubmitter(expense.expenseId)!;
+  }
 
-        return {
-            ...expense,
-            approvalHistory,
-        };
+  /**
+   * Get user's own expenses
+   */
+  async getMyExpenses(
+    user: AuthenticatedUser,
+    filters: Omit<ExpenseFilters, "submitterId">,
+  ) {
+    return expenseRepository.listByUser(user.userId, filters);
+  }
+
+  /**
+   * Get team expenses (for managers)
+   */
+  async getTeamExpenses(
+    user: AuthenticatedUser,
+    teamId: string | undefined,
+    filters: Omit<ExpenseFilters, "submitterId">,
+  ) {
+    // If no teamId provided, use user as manager
+    const managerId = teamId || user.userId;
+
+    // If user is not finance admin and trying to view another team, verify they are the manager
+    if (!isFinanceAdmin(user) && managerId !== user.userId) {
+      throw new ForbiddenError("You can only view your own team expenses");
     }
 
-    /**
-     * Approve an expense
-     */
-    async approveExpense(
-        user: AuthenticatedUser,
-        expenseId: string,
-        notes?: string
-    ): Promise<ExpenseWithApprovalHistory> {
-        const expense = expenseRepository.findByIdWithSubmitter(expenseId);
-        if (!expense) {
-            throw new NotFoundError('Expense', expenseId);
-        }
+    return expenseRepository.listByTeam(managerId, filters);
+  }
 
-        // Check if already processed
-        if (expense.status !== ExpenseStatus.PENDING) {
-            throw new ConflictError(
-                `Cannot approve expense with status '${expense.status}'`,
-                { currentStatus: expense.status }
-            );
-        }
-
-        // Check authorization
-        const canApprove = await this.canApproveExpense(user, expense);
-        if (!canApprove) {
-            throw new ForbiddenError('You do not have permission to approve this expense');
-        }
-
-        // Prevent self-approval
-        if (expense.submitterId === user.userId) {
-            throw new ForbiddenError('You cannot approve your own expense');
-        }
-
-        // Update status
-        expenseRepository.updateStatus(expenseId, ExpenseStatus.APPROVED);
-
-        // Create approval record
-        approvalRepository.create(expenseId, user.userId, 'approved', notes);
-
-        // Log audit
-        auditRepository.create({
-            userId: user.userId,
-            action: 'expense:approve',
-            resourceType: 'expense',
-            resourceId: expenseId,
-            details: { notes },
-        });
-
-        // Return updated expense with history
-        return this.getExpenseDetails(user, expenseId);
+  /**
+   * Get all expenses (for finance admin)
+   */
+  async getAllExpenses(user: AuthenticatedUser, filters: ExpenseFilters) {
+    // Finance admins can see all
+    if (!isFinanceAdmin(user)) {
+      throw new ForbiddenError("Only finance admins can view all expenses");
     }
 
-    /**
-     * Reject an expense
-     */
-    async rejectExpense(
-        user: AuthenticatedUser,
-        expenseId: string,
-        reason: string
-    ): Promise<ExpenseWithApprovalHistory> {
-        const expense = expenseRepository.findByIdWithSubmitter(expenseId);
-        if (!expense) {
-            throw new NotFoundError('Expense', expenseId);
-        }
+    return expenseRepository.list(filters);
+  }
 
-        // Check if already processed
-        if (expense.status !== ExpenseStatus.PENDING) {
-            throw new ConflictError(
-                `Cannot reject expense with status '${expense.status}'`,
-                { currentStatus: expense.status }
-            );
-        }
-
-        // Check authorization
-        const canApprove = await this.canApproveExpense(user, expense);
-        if (!canApprove) {
-            throw new ForbiddenError('You do not have permission to reject this expense');
-        }
-
-        // Update status
-        expenseRepository.updateStatus(expenseId, ExpenseStatus.REJECTED);
-
-        // Create rejection record
-        approvalRepository.create(expenseId, user.userId, 'rejected', reason);
-
-        // Log audit
-        auditRepository.create({
-            userId: user.userId,
-            action: 'expense:reject',
-            resourceType: 'expense',
-            resourceId: expenseId,
-            details: { reason },
-        });
-
-        // Return updated expense with history
-        return this.getExpenseDetails(user, expenseId);
+  /**
+   * Get expense details with approval history
+   */
+  async getExpenseDetails(
+    user: AuthenticatedUser,
+    expenseId: string,
+  ): Promise<ExpenseWithApprovalHistory> {
+    const expense = expenseRepository.findByIdWithSubmitter(expenseId);
+    if (!expense) {
+      throw new NotFoundError("Expense", expenseId);
     }
 
-    /**
-     * Check if user can view an expense
-     */
-    private async canViewExpense(
-        user: AuthenticatedUser,
-        expense: ExpenseWithSubmitter
-    ): Promise<boolean> {
-        // Finance admin can view all
-        if (isFinanceAdmin(user)) return true;
-
-        // User can view their own
-        if (expense.submitterId === user.userId) return true;
-
-        // Manager can view team expenses
-        if (isManagerOrHigher(user)) {
-            return userRepository.isTeamMember(expense.submitterId, user.userId);
-        }
-
-        return false;
+    // Check access
+    const canView = await this.canViewExpense(user, expense);
+    if (!canView) {
+      throw new ForbiddenError(
+        "You do not have permission to view this expense",
+      );
     }
 
-    /**
-     * Check if user can approve/reject an expense
-     */
-    private async canApproveExpense(
-        user: AuthenticatedUser,
-        expense: ExpenseWithSubmitter
-    ): Promise<boolean> {
-        // Finance admin can approve all
-        if (isFinanceAdmin(user)) return true;
+    // Get approval history
+    const approvalHistory = approvalRepository.getApprovalHistory(expenseId);
 
-        // Manager can approve team expenses
-        if (isManagerOrHigher(user)) {
-            return userRepository.isTeamMember(expense.submitterId, user.userId);
-        }
+    return {
+      ...expense,
+      approvalHistory,
+    };
+  }
 
-        return false;
+  /**
+   * Approve an expense
+   */
+  async approveExpense(
+    user: AuthenticatedUser,
+    expenseId: string,
+    notes?: string,
+  ): Promise<ExpenseWithApprovalHistory> {
+    const expense = expenseRepository.findByIdWithSubmitter(expenseId);
+    if (!expense) {
+      throw new NotFoundError("Expense", expenseId);
     }
+
+    // Check if already processed
+    if (expense.status !== ExpenseStatus.PENDING) {
+      throw new ConflictError(
+        `Cannot approve expense with status '${expense.status}'`,
+        { currentStatus: expense.status },
+      );
+    }
+
+    // Check authorization
+    const canApprove = await this.canApproveExpense(user, expense);
+    if (!canApprove) {
+      throw new ForbiddenError(
+        "You do not have permission to approve this expense",
+      );
+    }
+
+    // Prevent self-approval
+    if (expense.submitterId === user.userId) {
+      throw new ForbiddenError("You cannot approve your own expense");
+    }
+
+    // Update status
+    expenseRepository.updateStatus(expenseId, ExpenseStatus.APPROVED);
+
+    // Create approval record
+    approvalRepository.create(expenseId, user.userId, "approved", notes);
+
+    // Log audit
+    auditRepository.create({
+      userId: user.userId,
+      action: "expense:approve",
+      resourceType: "expense",
+      resourceId: expenseId,
+      details: { notes },
+    });
+
+    // Return updated expense with history
+    return this.getExpenseDetails(user, expenseId);
+  }
+
+  /**
+   * Reject an expense
+   */
+  async rejectExpense(
+    user: AuthenticatedUser,
+    expenseId: string,
+    reason: string,
+  ): Promise<ExpenseWithApprovalHistory> {
+    const expense = expenseRepository.findByIdWithSubmitter(expenseId);
+    if (!expense) {
+      throw new NotFoundError("Expense", expenseId);
+    }
+
+    // Check if already processed
+    if (expense.status !== ExpenseStatus.PENDING) {
+      throw new ConflictError(
+        `Cannot reject expense with status '${expense.status}'`,
+        { currentStatus: expense.status },
+      );
+    }
+
+    // Check authorization
+    const canApprove = await this.canApproveExpense(user, expense);
+    if (!canApprove) {
+      throw new ForbiddenError(
+        "You do not have permission to reject this expense",
+      );
+    }
+
+    // Update status
+    expenseRepository.updateStatus(expenseId, ExpenseStatus.REJECTED);
+
+    // Create rejection record
+    approvalRepository.create(expenseId, user.userId, "rejected", reason);
+
+    // Log audit
+    auditRepository.create({
+      userId: user.userId,
+      action: "expense:reject",
+      resourceType: "expense",
+      resourceId: expenseId,
+      details: { reason },
+    });
+
+    // Return updated expense with history
+    return this.getExpenseDetails(user, expenseId);
+  }
+
+  /**
+   * Check if user can view an expense
+   */
+  private async canViewExpense(
+    user: AuthenticatedUser,
+    expense: ExpenseWithSubmitter,
+  ): Promise<boolean> {
+    // Finance admin can view all
+    if (isFinanceAdmin(user)) return true;
+
+    // User can view their own
+    if (expense.submitterId === user.userId) return true;
+
+    // Manager can view team expenses
+    if (isManagerOrHigher(user)) {
+      return userRepository.isTeamMember(expense.submitterId, user.userId);
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if user can approve/reject an expense
+   */
+  private async canApproveExpense(
+    user: AuthenticatedUser,
+    expense: ExpenseWithSubmitter,
+  ): Promise<boolean> {
+    // Finance admin can approve all
+    if (isFinanceAdmin(user)) return true;
+
+    // Manager can approve team expenses
+    if (isManagerOrHigher(user)) {
+      return userRepository.isTeamMember(expense.submitterId, user.userId);
+    }
+
+    return false;
+  }
 }
 
 // Export singleton instance

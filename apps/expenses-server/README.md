@@ -1,29 +1,32 @@
 # Expense Management Server
 
-A combined MCP + REST API server for expense management with Descope authentication.
+A combined MCP + REST API server for expense management with Scalekit authentication.
 
 ## Features
 
 - **MCP Server** at `/mcp` - For AI agent integration
 - **REST API** at `/api` - For traditional clients
 - **SQLite Database** - Zero configuration, file-based
-- **Descope Auth** - JWT validation and RBAC
+- **Scalekit Auth** - JWT validation and RBAC
 
 ## Quick Start
 
 1. Copy `.env.example` to `.env`:
+
    ```bash
    cp .env.example .env
    ```
 
-2. Fill in your Descope credentials in `.env`
+2. Fill in your Scalekit credentials in `.env`
 
 3. Install dependencies:
+
    ```bash
    bun install
    ```
 
 4. Seed the database:
+
    ```bash
    bun run db:seed
    ```
@@ -37,16 +40,16 @@ A combined MCP + REST API server for expense management with Descope authenticat
 
 ### REST API (`/api`)
 
-| Method | Endpoint | Description | Required Scope |
-|--------|----------|-------------|----------------|
-| POST | /api/expenses | Submit expense | expense:submit |
-| GET | /api/expenses/me | List own expenses | expense:view:own |
-| GET | /api/expenses/team/:teamId | List team expenses | expense:view:team |
-| GET | /api/expenses/all | List all expenses | expense:view:all |
-| GET | /api/expenses/:id | Get expense details | expense:view:own/team/all |
-| POST | /api/expenses/:id/approve | Approve expense | expense:approve |
-| POST | /api/expenses/:id/reject | Reject expense | expense:approve |
-| POST | /api/expenses/reports/generate | Generate report | expense:report:generate |
+| Method | Endpoint                       | Description         | Required Scope            |
+| ------ | ------------------------------ | ------------------- | ------------------------- |
+| POST   | /api/expenses                  | Submit expense      | expense:submit            |
+| GET    | /api/expenses/me               | List own expenses   | expense:view:own          |
+| GET    | /api/expenses/team/:teamId     | List team expenses  | expense:view:team         |
+| GET    | /api/expenses/all              | List all expenses   | expense:view:all          |
+| GET    | /api/expenses/:id              | Get expense details | expense:view:own/team/all |
+| POST   | /api/expenses/:id/approve      | Approve expense     | expense:approve           |
+| POST   | /api/expenses/:id/reject       | Reject expense      | expense:approve           |
+| POST   | /api/expenses/reports/generate | Generate report     | expense:report:generate   |
 
 ### MCP Tools (`/mcp`)
 
@@ -59,11 +62,11 @@ A combined MCP + REST API server for expense management with Descope authenticat
 
 ## User Roles
 
-| Role | Permissions |
-|------|-------------|
-| employee | Submit, view own expenses |
-| manager | Submit, view own/team, approve/reject team |
-| finance_admin | Full access to all expenses and reports |
+| Role          | Permissions                                |
+| ------------- | ------------------------------------------ |
+| employee      | Submit, view own expenses                  |
+| manager       | Submit, view own/team, approve/reject team |
+| finance_admin | Full access to all expenses and reports    |
 
 ## Development
 
