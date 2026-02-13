@@ -51,56 +51,56 @@ function seedTestUsers(): void {
   const testUsers = [
     // Finance Admin
     {
-      userId: "user_carol_finance",
-      email: "carol@company.com",
-      fullName: "Carol Finance",
+      userId: "user_finance",
+      email: "finance@yopmail.com",
+      fullName: "Finance Guy",
       role: "finance_admin",
       department: "Finance",
       managerId: null,
     },
     // Engineering Manager
     {
-      userId: "user_bob_manager",
-      email: "bob@company.com",
-      fullName: "Bob Manager",
+      userId: "engineer_manager",
+      email: "manager-engineer@yopmail.com",
+      fullName: "Engineer Manager Guy",
       role: "manager",
       department: "Engineering",
-      managerId: "user_carol_finance",
+      managerId: "user_finance",
     },
     // Engineering Employees
     {
-      userId: "user_alice_employee",
-      email: "alice@company.com",
-      fullName: "Alice Employee",
+      userId: "engineer_employee",
+      email: "employee-engineer@yopmail.com",
+      fullName: "Engineer Employee Guy",
       role: "employee",
       department: "Engineering",
-      managerId: "user_bob_manager",
+      managerId: "engineer_manager",
     },
     {
-      userId: "user_dave_employee",
-      email: "dave@company.com",
-      fullName: "Dave Developer",
+      userId: "engineer_employee_2",
+      email: "employee-engineer-2@company.com",
+      fullName: "Engineer Employee 2 Guy",
       role: "employee",
       department: "Engineering",
-      managerId: "user_bob_manager",
+      managerId: "engineer_manager",
     },
     // Sales Manager
     {
-      userId: "user_eve_manager",
-      email: "eve@company.com",
-      fullName: "Eve Sales Manager",
+      userId: "sales_manager",
+      email: "manager-sales@yopmail.com",
+      fullName: "Sales Manager Guy",
       role: "manager",
       department: "Sales",
-      managerId: "user_carol_finance",
+      managerId: "user_finance",
     },
     // Sales Employee
     {
-      userId: "user_frank_employee",
-      email: "frank@company.com",
-      fullName: "Frank Salesman",
+      userId: "sales_employee",
+      email: "sales_employee@yopmail.com",
+      fullName: "Sales Employee Guy",
       role: "employee",
       department: "Sales",
-      managerId: "user_eve_manager",
+      managerId: "sales_manager",
     },
   ];
 
@@ -134,7 +134,7 @@ function seedSampleExpenses(): void {
     // Alice's expenses (Engineering employee)
     {
       expenseId: generateUUID(),
-      submitterId: "user_alice_employee",
+      submitterId: "engineer_employee",
       categoryId: 1, // Meals
       amount: 45.5,
       currency: "USD",
@@ -146,7 +146,7 @@ function seedSampleExpenses(): void {
     },
     {
       expenseId: generateUUID(),
-      submitterId: "user_alice_employee",
+      submitterId: "engineer_employee",
       categoryId: 4, // Software
       amount: 299.0,
       currency: "USD",
@@ -158,7 +158,7 @@ function seedSampleExpenses(): void {
     },
     {
       expenseId: generateUUID(),
-      submitterId: "user_alice_employee",
+      submitterId: "engineer_employee",
       categoryId: 2, // Travel
       amount: 850.0,
       currency: "USD",
@@ -172,7 +172,7 @@ function seedSampleExpenses(): void {
     // Dave's expenses (Engineering employee)
     {
       expenseId: generateUUID(),
-      submitterId: "user_dave_employee",
+      submitterId: "engineer_employee_2",
       categoryId: 3, // Office supplies
       amount: 125.0,
       currency: "USD",
@@ -184,7 +184,7 @@ function seedSampleExpenses(): void {
     },
     {
       expenseId: generateUUID(),
-      submitterId: "user_dave_employee",
+      submitterId: "engineer_employee_2",
       categoryId: 5, // Training
       amount: 1500.0,
       currency: "USD",
@@ -198,7 +198,7 @@ function seedSampleExpenses(): void {
     // Frank's expenses (Sales employee)
     {
       expenseId: generateUUID(),
-      submitterId: "user_frank_employee",
+      submitterId: "sales_employee",
       categoryId: 1, // Meals
       amount: 175.0,
       currency: "USD",
@@ -210,7 +210,7 @@ function seedSampleExpenses(): void {
     },
     {
       expenseId: generateUUID(),
-      submitterId: "user_frank_employee",
+      submitterId: "sales_employee",
       categoryId: 2, // Travel
       amount: 2100.0,
       currency: "USD",
@@ -224,7 +224,7 @@ function seedSampleExpenses(): void {
     // Bob's expenses (Engineering Manager)
     {
       expenseId: generateUUID(),
-      submitterId: "user_bob_manager",
+      submitterId: "engineer_manager",
       categoryId: 1, // Meals
       amount: 320.0,
       currency: "USD",
@@ -286,7 +286,7 @@ function seedApprovals(): void {
       )
       .get(expense.submitter_id) as { manager_id: string } | undefined;
 
-    const approverId = submitter?.manager_id || "user_carol_finance";
+    const approverId = submitter?.manager_id || "user_finance";
 
     const expenseStatus = db
       .prepare(

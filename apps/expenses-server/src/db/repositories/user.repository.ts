@@ -19,6 +19,8 @@ export class UserRepository extends BaseRepository {
       role: row.role as UserRole,
       department: row.department || undefined,
       managerId: row.manager_id || undefined,
+      lrUserId: row.lr_user_id || undefined,
+      scopes: row.scopes || "",
       createdAt: this.toDate(row.created_at),
       updatedAt: this.toDate(row.updated_at),
     };
@@ -52,6 +54,37 @@ export class UserRepository extends BaseRepository {
       .get(email) as UserRow | undefined;
 
     return row ? this.rowToUser(row) : null;
+  }
+
+  /**
+   * Find user by LoginRadius user ID
+   */
+  findByLrUserId(lrUserId: string): User | null {
+    const row = this.db
+      .prepare(
+        `
+      SELECT * FROM users WHERE lr_user_id = ?
+    `,
+      )
+      .get(lrUserId) as UserRow | undefined;
+
+    return row ? this.rowToUser(row) : null;
+  }
+
+  /**
+   * Find user by LoginRadius user ID or email
+   */
+  findByLrUserIdOrEmail(lrUserId?: string, email?: string): User | null {
+    if (lrUserId) {
+      const user = this.findByLrUserId(lrUserId);
+      if (user) return user;
+    }
+
+    if (email) {
+      return this.findByEmail(email);
+    }
+
+    return null;
   }
 
   /**
@@ -130,8 +163,8 @@ export class UserRepository extends BaseRepository {
     this.db
       .prepare(
         `
-      INSERT INTO users (user_id, email, full_name, role, department, manager_id, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (user_id, email, full_name, role, department, manager_id, lr_user_id, scopes, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
       )
       .run(
@@ -141,6 +174,8 @@ export class UserRepository extends BaseRepository {
         input.role,
         input.department || null,
         input.managerId || null,
+        input.lrUserId || null,
+        input.scopes || "",
         now,
         now,
       );
@@ -178,6 +213,14 @@ export class UserRepository extends BaseRepository {
       updates.push("manager_id = ?");
       values.push(input.managerId);
     }
+    if (input.lrUserId !== undefined) {
+      updates.push("lr_user_id = ?");
+      values.push(input.lrUserId);
+    }
+    if (input.scopes !== undefined) {
+      updates.push("scopes = ?");
+      values.push(input.scopes);
+    }
 
     if (updates.length === 0) return user;
 
@@ -209,6 +252,8 @@ export class UserRepository extends BaseRepository {
         role: input.role,
         department: input.department,
         managerId: input.managerId,
+        lrUserId: input.lrUserId,
+        scopes: input.scopes,
       })!;
     }
 
@@ -228,6 +273,13 @@ export class UserRepository extends BaseRepository {
       .run(userId);
 
     return result.changes > 0;
+  }
+
+  /**
+   * Update LoginRadius user ID
+   */
+  updateLrUserId(userId: string, lrUserId: string): User | null {
+    return this.update(userId, { lrUserId });
   }
 
   /**

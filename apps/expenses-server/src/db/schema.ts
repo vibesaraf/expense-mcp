@@ -19,6 +19,8 @@ export function createTables(): void {
       role TEXT NOT NULL CHECK (role IN ('employee', 'manager', 'finance_admin')),
       department TEXT,
       manager_id TEXT,
+      lr_user_id TEXT UNIQUE,
+      scopes TEXT NOT NULL DEFAULT '',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (manager_id) REFERENCES users(user_id)
@@ -35,6 +37,12 @@ export function createTables(): void {
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_users_department 
     ON users(department)
+  `);
+
+  // Create index on LoginRadius user ID
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_users_lr_user_id
+    ON users(lr_user_id)
   `);
 
   // Expense categories table

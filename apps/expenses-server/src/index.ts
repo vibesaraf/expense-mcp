@@ -7,6 +7,7 @@ import morgan from "morgan";
 import { config } from "./config";
 import { createMcpRouter } from "./mcp";
 import { apiRouter } from "./api";
+import { wellKnownRouter } from "./api/routes";
 import { errorHandler, notFoundHandler } from "./middleware";
 import { isDatabaseInitialized, getDb } from "./db";
 import { createTables } from "./db/schema";
@@ -76,16 +77,7 @@ app.get("/health", (_req, res) => {
 // ===================
 // OAuth Metadata (public)
 // ===================
-app.get("/.well-known/oauth-protected-resource", (_req, res) => {
-  try {
-    const metadata = JSON.parse(config.PROTECTED_RESOURCE_METADATA);
-    res.type("application/json").send(JSON.stringify(metadata, null, 2));
-  } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to load protected resource metadata" });
-  }
-});
+app.use(wellKnownRouter);
 
 // ===================
 // MCP Server Endpoint

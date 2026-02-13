@@ -66,6 +66,7 @@ You can optionally add notes to the approval.`,
       const authUser = {
         userId: user.userId,
         email: user.email,
+        fullName: user.fullName,
         roles: [user.role],
         department: user.department || "General",
       };

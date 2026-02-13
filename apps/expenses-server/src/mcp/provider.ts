@@ -1,10 +1,9 @@
 /**
  * Scope Constants
  *
- * These must match the scopes configured in Scalekit:
- * 1. Go to Scalekit Dashboard → MCP Servers
- * 2. Create an MCP Server
- * 3. Define these scopes with descriptions
+ * These must match the scopes configured in LoginRadius:
+ * 1. Go to LoginRadius dashboard → MCP app
+ * 2. Configure scopes for the MCP application
  */
 export const MCP_SCOPES = {
   // Basic scopes

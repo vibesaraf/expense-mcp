@@ -11,15 +11,18 @@ const envSchema = z.object({
   // Database
   DATABASE_PATH: z.string().default("./data/expense.db"),
 
-  // Scalekit
-  SCALEKIT_ENV_URL: z.string().url(),
-  SCALEKIT_CLIENT_ID: z.string().min(1, "SCALEKIT_CLIENT_ID is required"),
-  SCALEKIT_CLIENT_SECRET: z
-    .string()
-    .min(1, "SCALEKIT_CLIENT_SECRET is required"),
+  // LoginRadius
+  LR_ISSUER: z.string().url(),
+  LR_INTROSPECT_URL: z.string().url(),
+  LR_JWKS_URI: z.string().url(),
+  LR_CLIENT_ID: z.string().min(1, "LR_CLIENT_ID is required"),
+  LR_CLIENT_SECRET: z.string().min(1, "LR_CLIENT_SECRET is required"),
+  LR_TOKEN_ENDPOINT_AUTH_METHOD: z
+    .enum(["client_secret_post", "client_secret_basic"])
+    .default("client_secret_post"),
 
-  // MCP (Scalekit)
-  MCP_SERVER_URL: z.string().url(),
+  // MCP
+  MCP_RESOURCE_URL: z.string().url(),
   PROTECTED_RESOURCE_METADATA: z
     .string()
     .min(1, "PROTECTED_RESOURCE_METADATA is required"),

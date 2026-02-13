@@ -1,11 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
-import { scalekitClient } from "../config/scalekit";
-import { UnauthorizedError } from "../utils/errors";
-import type {
-  AuthenticatedUser,
-  ScalekitTokenClaims,
-} from "../types/auth.types";
-import { UserRoles, type UserRole } from "../config/constants";
+import { introspectToken } from "../config/loginradius-client";
+import { config } from "../config";
+import { userRepository } from "../db/repositories";
+import { ForbiddenError, UnauthorizedError } from "../utils/errors";
+import type { AuthenticatedUser } from "../types/auth.types";
+import { LR_MCP_SCOPE } from "../config/constants";
 
 /**
  * Extract Bearer token from Authorization header
@@ -15,52 +14,6 @@ function extractBearerToken(authHeader?: string): string | null {
     return null;
   }
   return authHeader.substring(7);
-}
-
-/**
- * Map Scalekit roles to application roles
- */
-function mapScalekitRoles(roles?: string[]): UserRole[] {
-  if (!roles || roles.length === 0) {
-    return [UserRoles.EMPLOYEE]; // Default role
-  }
-
-  const validRoles: UserRole[] = [];
-  for (const role of roles) {
-    const normalizedRole = role.toLowerCase();
-    if (
-      normalizedRole === "finance_admin" ||
-      normalizedRole === "finance-admin" ||
-      normalizedRole === "financeadmin"
-    ) {
-      validRoles.push(UserRoles.FINANCE_ADMIN);
-    } else if (normalizedRole === "manager") {
-      validRoles.push(UserRoles.MANAGER);
-    } else if (normalizedRole === "employee") {
-      validRoles.push(UserRoles.EMPLOYEE);
-    }
-  }
-
-  return validRoles.length > 0 ? validRoles : [UserRoles.EMPLOYEE];
-}
-
-function decodeJwtClaims(token: string): ScalekitTokenClaims {
-  const parts = token.split(".");
-  if (parts.length !== 3) {
-    throw new UnauthorizedError("Invalid access token format");
-  }
-
-  const payloadPart = parts[1];
-  if (!payloadPart) {
-    throw new UnauthorizedError("Invalid access token payload");
-  }
-
-  try {
-    const payload = Buffer.from(payloadPart, "base64url").toString("utf-8");
-    return JSON.parse(payload) as ScalekitTokenClaims;
-  } catch (error) {
-    throw new UnauthorizedError("Invalid access token payload");
-  }
 }
 
 function extractScopes(scope?: string | string[]): string[] {
@@ -77,23 +30,55 @@ function extractScopes(scope?: string | string[]): string[] {
     .map((entry) => entry.trim())
     .filter(Boolean);
 }
+async function extractUserInfo(token: string): Promise<{ email?: string }> {
+  const baseUrl = `${config.LR_ISSUER}/userinfo?access_token=${token}`;
 
-function extractRoles(claims: ScalekitTokenClaims): string[] {
-  const rawRoles = claims.roles ?? claims.role;
-  if (!rawRoles) {
+  const url = new URL(baseUrl);
+
+  const data = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!data.ok) {
+    throw new Error(`Failed to fetch user info: ${data.statusText}`);
+  }
+
+  const userInfo = await data.json() as any;
+  return {
+    email: userInfo.email || ""
+  };  
+}
+
+function extractLocalScopes(scopes?: string): string[] {
+  if (!scopes) {
     return [];
   }
 
-  if (Array.isArray(rawRoles)) {
-    return rawRoles.filter(Boolean);
-  }
+  return scopes
+    .split(" ")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
 
-  return [rawRoles];
+function getProtectedResourceMetadataUrl(): string {
+  const baseUrl = config.MCP_RESOURCE_URL.replace(/\/mcp$/, "");
+  return `${baseUrl}/.well-known/oauth-protected-resource`;
+}
+
+function setWwwAuthenticateHeader(res: Response): void {
+  const metadataUrl = getProtectedResourceMetadataUrl();
+  res.set(
+    "WWW-Authenticate",
+    `Bearer realm="expense-mcp", resource_metadata="${metadataUrl}"`,
+  );
 }
 
 /**
- * Express middleware for JWT authentication using Scalekit
- * Validates the access token and attaches user info to request
+ * Express middleware for LoginRadius token authentication
+ * Validates the access token and attaches local user info to request
  */
 export async function authMiddleware(
   req: Request,
@@ -104,23 +89,55 @@ export async function authMiddleware(
     const token = extractBearerToken(req.headers.authorization);
 
     if (!token) {
+      setWwwAuthenticateHeader(res);
       throw new UnauthorizedError("Missing or invalid Authorization header");
     }
 
-    // Validate the access token with Scalekit
-    await scalekitClient.validateAccessToken(token);
+    const introspection = await introspectToken(token);
 
-    // Extract claims from the validated token
-    const claims = decodeJwtClaims(token);
+    if (!introspection.active) {
+      setWwwAuthenticateHeader(res);
+      throw new UnauthorizedError("Token is not active");
+    }
 
-    // Build authenticated user object
+    if (introspection.iss && introspection.iss !== config.LR_ISSUER) {
+      setWwwAuthenticateHeader(res);
+      throw new UnauthorizedError("Token issuer mismatch");
+    }
+
+    const lrScopes = extractScopes(introspection.scp);
+    if (!lrScopes.includes(LR_MCP_SCOPE)) {
+      throw new ForbiddenError(`Missing required scope: ${LR_MCP_SCOPE}`);
+    }
+
+    const userInfo = await extractUserInfo(token)
+    console.log("userInfo:", userInfo);
+
+    const user = userRepository.findByLrUserIdOrEmail(
+      introspection.sub,
+      userInfo.email,
+    );
+
+    console.log("user:", user);
+
+    if (!user) {
+      setWwwAuthenticateHeader(res);
+      throw new UnauthorizedError("User not registered");
+    }
+
+    if (!user.lrUserId && introspection.sub) {
+      userRepository.updateLrUserId(user.userId, introspection.sub);
+    }
+
+    // Build authenticated user object from local DB
     const authenticatedUser: AuthenticatedUser = {
-      userId: claims.sub,
-      email: claims.email || "",
-      name: claims.name,
-      roles: mapScalekitRoles(extractRoles(claims)),
-      scopes: extractScopes(claims.scope),
-      tenantId: claims.tenantId || claims.tenant_id || claims.tenant,
+      userId: user.userId,
+      email: user.email,
+      fullName: user.fullName,
+      roles: [user.role],
+      scopes: extractLocalScopes(user.scopes),
+      department: user.department,
+      managerId: user.managerId,
     };
 
     // Attach to request for downstream handlers
@@ -133,8 +150,13 @@ export async function authMiddleware(
       return;
     }
 
-    // Handle Scalekit SDK errors
+    if (error instanceof ForbiddenError) {
+      next(error);
+      return;
+    }
+
     console.error("Auth error:", error);
+    setWwwAuthenticateHeader(res);
     next(new UnauthorizedError("Authentication failed"));
   }
 }

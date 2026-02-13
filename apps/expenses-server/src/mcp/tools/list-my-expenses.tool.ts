@@ -116,6 +116,9 @@ Use this tool to check the status of your submitted expenses or review your expe
         email:
           (authInfo.claims?.email as string | undefined) ||
           `${userId}@example.com`,
+        fullName:
+          (authInfo.claims?.name as string | undefined) ||
+          `${userId}@example.com`,
         roles: [],
       };
 

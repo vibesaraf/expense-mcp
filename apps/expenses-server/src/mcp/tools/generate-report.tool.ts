@@ -95,6 +95,7 @@ You must specify a date range (from_date, to_date).`,
       const authUser = {
         userId: user.userId,
         email: user.email,
+        fullName: user.fullName,
         roles: [user.role],
         department: user.department || "General",
       };

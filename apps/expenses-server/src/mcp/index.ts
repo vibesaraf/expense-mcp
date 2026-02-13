@@ -56,7 +56,7 @@ function isInitRequest(body: unknown): boolean {
 }
 
 /**
- * Create the MCP router with Scalekit authentication
+ * Create the MCP router with LoginRadius authentication
  */
 export function createMcpRouter(): RequestHandler {
   const router = express.Router();

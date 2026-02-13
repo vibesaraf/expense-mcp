@@ -66,6 +66,7 @@ A reason for rejection is required.`,
       const authUser = {
         userId: user.userId,
         email: user.email,
+        fullName: user.fullName,
         roles: [user.role],
         department: user.department || "General",
       };

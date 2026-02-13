@@ -1,29 +1,35 @@
-import type { UserRole } from '../config/constants';
+import type { UserRole } from "../config/constants";
 
 export interface User {
-    userId: string;
-    email: string;
-    fullName: string;
-    role: UserRole;
-    department?: string;
-    managerId?: string;
-    createdAt: Date;
-    updatedAt: Date;
+  userId: string;
+  email: string;
+  fullName: string;
+  role: UserRole;
+  department?: string;
+  managerId?: string;
+  lrUserId?: string;
+  scopes: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateUserInput {
-    userId: string;
-    email: string;
-    fullName: string;
-    role: UserRole;
-    department?: string;
-    managerId?: string;
+  userId: string;
+  email: string;
+  fullName: string;
+  role: UserRole;
+  department?: string;
+  managerId?: string;
+  lrUserId?: string;
+  scopes?: string;
 }
 
 export interface UpdateUserInput {
-    email?: string;
-    fullName?: string;
-    role?: UserRole;
-    department?: string;
-    managerId?: string;
+  email?: string;
+  fullName?: string;
+  role?: UserRole;
+  department?: string;
+  managerId?: string;
+  lrUserId?: string;
+  scopes?: string;
 }

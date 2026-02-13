@@ -80,7 +80,7 @@ The expense will be created with 'pending' status and routed to the appropriate 
 
   input: submitExpenseInput as any,
 
-  scopes: [MCP_SCOPES.EXPENSE_SUBMIT],
+  // scopes: [MCP_SCOPES.EXPENSE_SUBMIT],
 
   handler: async (args, extra) => {
     try {
@@ -108,7 +108,7 @@ The expense will be created with 'pending' status and routed to the appropriate 
       const email =
         (authInfo.claims?.email as string | undefined) ||
         `${userId}@example.com`;
-      const name =
+      const fullName =
         (authInfo.claims?.name as string | undefined) || "Unknown User";
       // Roles might be in claims or scopes depending on the auth provider.
 
@@ -116,7 +116,7 @@ The expense will be created with 'pending' status and routed to the appropriate 
       const user = {
         userId,
         email,
-        name,
+        fullName,
         roles: [], // Service will handle defaults if user doesn't exist
         department: "General", // Default
       };

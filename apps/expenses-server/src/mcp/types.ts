@@ -3,7 +3,7 @@
 // =============================================================================
 
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import type { ScalekitTokenClaims } from "../types/auth.types";
+import type { IntrospectionResponse } from "../config/loginradius-client";
 
 /**
  * Authentication info provided to MCP tools
@@ -22,8 +22,8 @@ export interface McpAuthInfo {
   /** Token expiration timestamp */
   expiresAt?: number;
 
-  /** Raw token claims (Scalekit) */
-  claims?: ScalekitTokenClaims | Record<string, unknown>;
+  /** Raw token claims (LoginRadius introspection response) */
+  claims?: IntrospectionResponse | Record<string, unknown>;
 }
 
 /**

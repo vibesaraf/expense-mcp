@@ -1,8 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
-import { scalekitClient } from "../config/scalekit";
-import type { ScalekitTokenClaims } from "../types/auth.types";
-import type { McpAuthInfo } from "./types";
+import {
+  introspectToken,
+  type IntrospectionResponse,
+} from "../config/loginradius-client";
 import { config } from "../config";
+import { userRepository } from "../db/repositories";
+import { LR_MCP_SCOPE } from "../config/constants";
+import type { McpAuthInfo } from "./types";
 
 function extractBearerToken(authHeader?: string): string | null {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -10,21 +14,6 @@ function extractBearerToken(authHeader?: string): string | null {
   }
 
   return authHeader.substring(7);
-}
-
-function decodeJwtClaims(token: string): ScalekitTokenClaims {
-  const parts = token.split(".");
-  if (parts.length !== 3) {
-    throw new Error("Invalid access token format");
-  }
-
-  const payloadPart = parts[1];
-  if (!payloadPart) {
-    throw new Error("Invalid access token payload");
-  }
-
-  const payload = Buffer.from(payloadPart, "base64url").toString("utf-8");
-  return JSON.parse(payload) as ScalekitTokenClaims;
 }
 
 function extractScopes(scope?: string | string[]): string[] {
@@ -42,30 +31,67 @@ function extractScopes(scope?: string | string[]): string[] {
     .filter(Boolean);
 }
 
+function extractLocalScopes(scopes?: string): string[] {
+  if (!scopes) {
+    return [];
+  }
+
+  return scopes
+    .split(" ")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+async function extractUserInfo(token: string): Promise<{ email?: string }> {
+  const baseUrl = `${config.LR_ISSUER}/userinfo?access_token=${token}`;
+
+  const url = new URL(baseUrl);
+
+  const data = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!data.ok) {
+    throw new Error(`Failed to fetch user info: ${data.statusText}`);
+  }
+
+  const userInfo = await data.json() as any;
+  return {
+    email: userInfo.email || ""
+  };  
+}
+
 function getProtectedResourceMetadataUrl(): string {
-  const baseUrl = config.MCP_SERVER_URL.endsWith("/")
-    ? config.MCP_SERVER_URL
-    : `${config.MCP_SERVER_URL}/`;
-  return new URL(".well-known/oauth-protected-resource", baseUrl).toString();
+  const baseUrl = config.MCP_RESOURCE_URL.replace(/\/mcp$/, "");
+  return `${baseUrl}/.well-known/oauth-protected-resource`;
 }
 
 function setWwwAuthenticateHeader(res: Response): void {
   const metadataUrl = getProtectedResourceMetadataUrl();
   res.set(
     "WWW-Authenticate",
-    `Bearer realm="MCP", resource_metadata="${metadataUrl}"`,
+    `Bearer realm="expense-mcp", resource_metadata="${metadataUrl}"`,
   );
 }
 
-function buildAuthInfo(token: string): McpAuthInfo {
-  const claims = decodeJwtClaims(token);
-
+function buildAuthInfo(
+  token: string,
+  introspection: IntrospectionResponse,
+  user: { userId: string; email: string; fullName: string; scopes: string },
+): McpAuthInfo {
   return {
     token,
-    clientId: claims.sub,
-    scopes: extractScopes(claims.scope),
-    expiresAt: claims.exp,
-    claims,
+    clientId: user.userId,
+    scopes: extractLocalScopes(user.scopes),
+    expiresAt: introspection.exp,
+    claims: {
+      ...introspection,
+      email: user.email,
+      name: user.fullName,
+    },
   };
 }
 
@@ -83,8 +109,50 @@ export async function mcpAuthMiddleware(
   }
 
   try {
-    await scalekitClient.validateAccessToken(token);
-    const authInfo = buildAuthInfo(token);
+    const introspection = await introspectToken(token);
+
+    if (!introspection.active) {
+      setWwwAuthenticateHeader(res);
+      res.status(401).json({ error: "Token is not active" });
+      return;
+    }
+
+    if (introspection.iss && introspection.iss !== config.LR_ISSUER) {
+      setWwwAuthenticateHeader(res);
+      res.status(401).json({ error: "Token issuer mismatch" });
+      return;
+    }
+
+    const lrScopes = extractScopes(introspection.scp);
+    if (!lrScopes.includes(LR_MCP_SCOPE)) {
+      res
+        .status(403)
+        .json({ error: `Missing required scope: ${LR_MCP_SCOPE}` });
+      return;
+    }
+    const userInfo = await extractUserInfo(token)
+    console.log("userInfo:", userInfo);
+    const user = userRepository.findByLrUserIdOrEmail(
+      introspection.sub,
+      userInfo.email,
+    );
+
+    if (!user) {
+      setWwwAuthenticateHeader(res);
+      res.status(401).json({ error: "User not registered" });
+      return;
+    }
+
+    if (!user.lrUserId && introspection.sub) {
+      userRepository.updateLrUserId(user.userId, introspection.sub);
+    }
+
+    const authInfo = buildAuthInfo(token, introspection, {
+      userId: user.userId,
+      email: user.email,
+      fullName: user.fullName,
+      scopes: user.scopes,
+    });
     (req as Request & { auth?: McpAuthInfo }).auth = authInfo;
     next();
   } catch (error) {

@@ -67,7 +67,7 @@ export class ExpenseService {
       dbUser = userRepository.create({
         userId: user.userId,
         email: user.email,
-        fullName: user.name || user.email,
+        fullName: user.fullName || user.email,
         role: user.roles[0] || UserRoles.EMPLOYEE,
         department: user.department,
       });

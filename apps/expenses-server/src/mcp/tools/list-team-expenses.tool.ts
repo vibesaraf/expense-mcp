@@ -144,6 +144,7 @@ Note: You can only view expenses from users who report to you directly (your tea
       const authUser = {
         userId: user.userId,
         email: user.email,
+        fullName: user.fullName,
         roles: [user.role], // Mapping role to roles array
         department: user.department || "General",
       };
