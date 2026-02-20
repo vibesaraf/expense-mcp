@@ -5,7 +5,6 @@ import type {
   UpdateUserInput,
 } from "../../types/user.types";
 import type { UserRow } from "../types";
-import type { UserRole } from "../../config/constants";
 
 export class UserRepository extends BaseRepository {
   /**
@@ -16,11 +15,9 @@ export class UserRepository extends BaseRepository {
       userId: row.user_id,
       email: row.email,
       fullName: row.full_name,
-      role: row.role as UserRole,
       department: row.department || undefined,
       managerId: row.manager_id || undefined,
       lrUserId: row.lr_user_id || undefined,
-      scopes: row.scopes || "",
       createdAt: this.toDate(row.created_at),
       updatedAt: this.toDate(row.updated_at),
     };
@@ -163,19 +160,17 @@ export class UserRepository extends BaseRepository {
     this.db
       .prepare(
         `
-      INSERT INTO users (user_id, email, full_name, role, department, manager_id, lr_user_id, scopes, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (user_id, email, full_name, department, manager_id, lr_user_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
       )
       .run(
         input.userId,
         input.email,
         input.fullName,
-        input.role,
         input.department || null,
         input.managerId || null,
         input.lrUserId || null,
-        input.scopes || "",
         now,
         now,
       );
@@ -201,10 +196,6 @@ export class UserRepository extends BaseRepository {
       updates.push("full_name = ?");
       values.push(input.fullName);
     }
-    if (input.role !== undefined) {
-      updates.push("role = ?");
-      values.push(input.role);
-    }
     if (input.department !== undefined) {
       updates.push("department = ?");
       values.push(input.department);
@@ -216,10 +207,6 @@ export class UserRepository extends BaseRepository {
     if (input.lrUserId !== undefined) {
       updates.push("lr_user_id = ?");
       values.push(input.lrUserId);
-    }
-    if (input.scopes !== undefined) {
-      updates.push("scopes = ?");
-      values.push(input.scopes);
     }
 
     if (updates.length === 0) return user;
@@ -249,11 +236,9 @@ export class UserRepository extends BaseRepository {
       return this.update(input.userId, {
         email: input.email,
         fullName: input.fullName,
-        role: input.role,
         department: input.department,
         managerId: input.managerId,
         lrUserId: input.lrUserId,
-        scopes: input.scopes,
       })!;
     }
 

@@ -11,7 +11,11 @@ import { reportService } from "../../services/report.service";
 import { userRepository } from "../../db/repositories";
 import { MCP_SCOPES } from "../provider";
 import { createTextResponse, createErrorResponse } from "../types";
-import { ReportTypes, ExpenseStatus, UserRoles } from "../../config/constants";
+import { ReportTypes, ExpenseStatus } from "../../config/constants";
+import {
+  deriveRolesFromScopes,
+  isFinanceAdmin,
+} from "../../middleware/rbac.middleware";
 
 /**
  * Input schema for generate_report tool
@@ -83,8 +87,11 @@ You must specify a date range (from_date, to_date).`,
         return createErrorResponse("User not found");
       }
 
+      const roles =
+        extra.authInfo.roles ?? deriveRolesFromScopes(extra.authInfo.scopes);
+
       // Check RBAC
-      if (user.role !== UserRoles.FINANCE_ADMIN) {
+      if (!isFinanceAdmin({ roles })) {
         return createErrorResponse("Access denied", {
           code: "FORBIDDEN",
           message: "Only finance admins can generate reports",
@@ -96,7 +103,8 @@ You must specify a date range (from_date, to_date).`,
         userId: user.userId,
         email: user.email,
         fullName: user.fullName,
-        roles: [user.role],
+        roles,
+        scopes: extra.authInfo.scopes,
         department: user.department || "General",
       };
 

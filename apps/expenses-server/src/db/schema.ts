@@ -16,11 +16,9 @@ export function createTables(): void {
       user_id TEXT PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
       full_name TEXT NOT NULL,
-      role TEXT NOT NULL CHECK (role IN ('employee', 'manager', 'finance_admin')),
       department TEXT,
       manager_id TEXT,
       lr_user_id TEXT UNIQUE,
-      scopes TEXT NOT NULL DEFAULT '',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (manager_id) REFERENCES users(user_id)

@@ -10,8 +10,9 @@ import { z } from "zod";
 import { expenseService } from "../../services/expense.service";
 import { MCP_SCOPES } from "../provider";
 import { createTextResponse, createErrorResponse } from "../types";
-import { ExpenseStatus, ExpenseStatusType } from "../../config/constants";
-import { expenseRepository } from "../../db/repositories"; // Need access to helper for category mapping if needed
+import { ExpenseStatus } from "../../config/constants";
+import { userRepository } from "../../db/repositories";
+import { deriveRolesFromScopes } from "../../middleware/rbac.middleware";
 
 /**
  * Input schema for list_my_expenses tool
@@ -109,21 +110,31 @@ Use this tool to check the status of your submitted expenses or review your expe
         limit: args.limit || 20,
       };
 
-      // Mock authenticated user object
-      const authInfo = extra.authInfo as any;
-      const user = {
-        userId,
-        email:
-          (authInfo.claims?.email as string | undefined) ||
-          `${userId}@example.com`,
-        fullName:
-          (authInfo.claims?.name as string | undefined) ||
-          `${userId}@example.com`,
-        roles: [],
+      const user = userRepository.findById(userId);
+      if (!user) {
+        return createErrorResponse("User not found", {
+          code: "NOT_FOUND",
+        });
+      }
+
+      const roles =
+        extra.authInfo.roles ?? deriveRolesFromScopes(extra.authInfo.scopes);
+
+      const authUser = {
+        userId: user.userId,
+        email: user.email,
+        fullName: user.fullName,
+        roles,
+        scopes: extra.authInfo.scopes,
+        department: user.department || "General",
+        managerId: user.managerId,
       };
 
       // Call service layer
-      const result = await expenseService.getMyExpenses(user as any, filters);
+      const result = await expenseService.getMyExpenses(
+        authUser as any,
+        filters,
+      );
 
       return createTextResponse({
         success: true,

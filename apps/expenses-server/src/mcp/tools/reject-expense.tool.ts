@@ -11,6 +11,7 @@ import { expenseService } from "../../services/expense.service";
 import { userRepository } from "../../db/repositories";
 import { MCP_SCOPES } from "../provider";
 import { createTextResponse, createErrorResponse } from "../types";
+import { deriveRolesFromScopes } from "../../middleware/rbac.middleware";
 
 /**
  * Input schema for reject_expense tool
@@ -62,12 +63,16 @@ A reason for rejection is required.`,
         return createErrorResponse("User not found");
       }
 
+      const roles =
+        extra.authInfo.roles ?? deriveRolesFromScopes(extra.authInfo.scopes);
+
       // Construct AuthenticatedUser
       const authUser = {
         userId: user.userId,
         email: user.email,
         fullName: user.fullName,
-        roles: [user.role],
+        roles,
+        scopes: extra.authInfo.scopes,
         department: user.department || "General",
       };
 

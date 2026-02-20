@@ -7,11 +7,9 @@ export interface UserRow {
   user_id: string;
   email: string;
   full_name: string;
-  role: string;
   department: string | null;
   manager_id: string | null;
   lr_user_id: string | null;
-  scopes: string;
   created_at: string;
   updated_at: string;
 }

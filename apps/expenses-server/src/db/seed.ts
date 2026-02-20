@@ -37,7 +37,7 @@ function seedTestUsers(): void {
 
   const insertUser = db.prepare(`
     INSERT OR IGNORE INTO users 
-    (user_id, email, full_name, role, department, manager_id)
+    (user_id, email, full_name, department, manager_id, lr_user_id)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
 
@@ -54,7 +54,6 @@ function seedTestUsers(): void {
       userId: "user_finance",
       email: "finance@yopmail.com",
       fullName: "Finance Guy",
-      role: "finance_admin",
       department: "Finance",
       managerId: null,
     },
@@ -63,7 +62,6 @@ function seedTestUsers(): void {
       userId: "engineer_manager",
       email: "manager-engineer@yopmail.com",
       fullName: "Engineer Manager Guy",
-      role: "manager",
       department: "Engineering",
       managerId: "user_finance",
     },
@@ -72,7 +70,6 @@ function seedTestUsers(): void {
       userId: "engineer_employee",
       email: "employee-engineer@yopmail.com",
       fullName: "Engineer Employee Guy",
-      role: "employee",
       department: "Engineering",
       managerId: "engineer_manager",
     },
@@ -80,7 +77,6 @@ function seedTestUsers(): void {
       userId: "engineer_employee_2",
       email: "employee-engineer-2@company.com",
       fullName: "Engineer Employee 2 Guy",
-      role: "employee",
       department: "Engineering",
       managerId: "engineer_manager",
     },
@@ -89,7 +85,6 @@ function seedTestUsers(): void {
       userId: "sales_manager",
       email: "manager-sales@yopmail.com",
       fullName: "Sales Manager Guy",
-      role: "manager",
       department: "Sales",
       managerId: "user_finance",
     },
@@ -98,7 +93,6 @@ function seedTestUsers(): void {
       userId: "sales_employee",
       email: "sales_employee@yopmail.com",
       fullName: "Sales Employee Guy",
-      role: "employee",
       department: "Sales",
       managerId: "sales_manager",
     },
@@ -109,9 +103,9 @@ function seedTestUsers(): void {
       user.userId,
       user.email,
       user.fullName,
-      user.role,
       user.department,
       user.managerId,
+      null,
     );
   }
 

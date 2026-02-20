@@ -3,7 +3,7 @@
 // =============================================================================
 
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import type { IntrospectionResponse } from "../config/loginradius-client";
+import type { UserRole } from "../config/constants";
 
 /**
  * Authentication info provided to MCP tools
@@ -19,11 +19,14 @@ export interface McpAuthInfo {
   /** Scopes granted to this token */
   scopes: string[];
 
+  /** Derived roles from scopes */
+  roles?: UserRole[];
+
   /** Token expiration timestamp */
   expiresAt?: number;
 
-  /** Raw token claims (LoginRadius introspection response) */
-  claims?: IntrospectionResponse | Record<string, unknown>;
+  /** Raw token claims */
+  claims?: Record<string, unknown>;
 }
 
 /**

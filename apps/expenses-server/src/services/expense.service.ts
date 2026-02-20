@@ -18,8 +18,9 @@ import {
   ValidationError,
   ForbiddenError,
   ConflictError,
+  UnauthorizedError,
 } from "../utils/errors";
-import { ExpenseStatus, UserRoles } from "../config/constants";
+import { ExpenseStatus } from "../config/constants";
 import {
   isFinanceAdmin,
   isManagerOrHigher,
@@ -60,17 +61,9 @@ export class ExpenseService {
       );
     }
 
-    // Ensure user exists in local DB (sync from auth provider if needed)
-    let dbUser = userRepository.findById(user.userId);
+    const dbUser = userRepository.findById(user.userId);
     if (!dbUser) {
-      // Create user in local DB
-      dbUser = userRepository.create({
-        userId: user.userId,
-        email: user.email,
-        fullName: user.fullName || user.email,
-        role: user.roles[0] || UserRoles.EMPLOYEE,
-        department: user.department,
-      });
+      throw new UnauthorizedError("User not registered");
     }
 
     // Create the expense

@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
-import { introspectToken } from "../config/loginradius-client";
 import { config } from "../config";
 import { userRepository } from "../db/repositories";
 import { ForbiddenError, UnauthorizedError } from "../utils/errors";
 import type { AuthenticatedUser } from "../types/auth.types";
-import { LR_MCP_SCOPE } from "../config/constants";
+import { verifyIdToken } from "../utils/oidc";
+import { deriveRolesFromScopes } from "./rbac.middleware";
 
 /**
  * Extract Bearer token from Authorization header
@@ -14,53 +14,6 @@ function extractBearerToken(authHeader?: string): string | null {
     return null;
   }
   return authHeader.substring(7);
-}
-
-function extractScopes(scope?: string | string[]): string[] {
-  if (!scope) {
-    return [];
-  }
-
-  if (Array.isArray(scope)) {
-    return scope.filter(Boolean);
-  }
-
-  return scope
-    .split(" ")
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-}
-async function extractUserInfo(token: string): Promise<{ email?: string }> {
-  const baseUrl = `${config.LR_ISSUER}/userinfo?access_token=${token}`;
-
-  const url = new URL(baseUrl);
-
-  const data = await fetch(url.toString(), {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!data.ok) {
-    throw new Error(`Failed to fetch user info: ${data.statusText}`);
-  }
-
-  const userInfo = await data.json() as any;
-  return {
-    email: userInfo.email || ""
-  };  
-}
-
-function extractLocalScopes(scopes?: string): string[] {
-  if (!scopes) {
-    return [];
-  }
-
-  return scopes
-    .split(" ")
-    .map((entry) => entry.trim())
-    .filter(Boolean);
 }
 
 function getProtectedResourceMetadataUrl(): string {
@@ -93,40 +46,18 @@ export async function authMiddleware(
       throw new UnauthorizedError("Missing or invalid Authorization header");
     }
 
-    const introspection = await introspectToken(token);
+    const tokenData = await verifyIdToken(token, {
+      audience: config.SERVER_URL,
+    });
 
-    if (!introspection.active) {
-      setWwwAuthenticateHeader(res);
-      throw new UnauthorizedError("Token is not active");
-    }
+    const lrScopes = tokenData.scopes;
 
-    if (introspection.iss && introspection.iss !== config.LR_ISSUER) {
-      setWwwAuthenticateHeader(res);
-      throw new UnauthorizedError("Token issuer mismatch");
-    }
-
-    const lrScopes = extractScopes(introspection.scp);
-    if (!lrScopes.includes(LR_MCP_SCOPE)) {
-      throw new ForbiddenError(`Missing required scope: ${LR_MCP_SCOPE}`);
-    }
-
-    const userInfo = await extractUserInfo(token)
-    console.log("userInfo:", userInfo);
-
-    const user = userRepository.findByLrUserIdOrEmail(
-      introspection.sub,
-      userInfo.email,
-    );
-
-    console.log("user:", user);
+    const email = tokenData.claims.email as string | undefined;
+    const user = userRepository.findByLrUserIdOrEmail(tokenData.sub, email);
 
     if (!user) {
       setWwwAuthenticateHeader(res);
       throw new UnauthorizedError("User not registered");
-    }
-
-    if (!user.lrUserId && introspection.sub) {
-      userRepository.updateLrUserId(user.userId, introspection.sub);
     }
 
     // Build authenticated user object from local DB
@@ -134,8 +65,8 @@ export async function authMiddleware(
       userId: user.userId,
       email: user.email,
       fullName: user.fullName,
-      roles: [user.role],
-      scopes: extractLocalScopes(user.scopes),
+      roles: deriveRolesFromScopes(lrScopes),
+      scopes: lrScopes,
       department: user.department,
       managerId: user.managerId,
     };
