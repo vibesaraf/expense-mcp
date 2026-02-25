@@ -13,6 +13,7 @@ import {
   approveExpenseTool,
   rejectExpenseTool,
   generateReportTool,
+  whoAmITool,
 } from "./tools";
 
 /**
@@ -25,6 +26,7 @@ function registerTools(server: McpServer): void {
   approveExpenseTool(server);
   rejectExpenseTool(server);
   generateReportTool(server);
+  whoAmITool(server);
 }
 
 function createServer(): McpServer {
