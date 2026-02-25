@@ -1,0 +1,58 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Server: Local Debug",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "bun",
+            "runtimeArgs": [
+                "run",
+                "dev"
+            ],
+            "cwd": "${workspaceFolder}/apps/expenses-server",
+            "console": "integratedTerminal",
+            "autoAttachChildProcesses": true,
+            "sourceMaps": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "Client: Next.js (Server-side)",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "bun",
+            "runtimeArgs": [
+                "run",
+                "dev"
+            ],
+            "cwd": "${workspaceFolder}/apps/client",
+            "console": "integratedTerminal",
+            "autoAttachChildProcesses": true,
+            "sourceMaps": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "Client: Next.js (Browser)",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:4000",
+            "webRoot": "${workspaceFolder}/apps/client",
+            "sourceMapPathOverrides": {
+                "webpack://_N_E/*": "${webRoot}/*"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Debug All (Server + Client)",
+            "configurations": [
+                "Server: Local Debug",
+                "Client: Next.js (Server-side)"
+            ]
+        }
+    ]
+}

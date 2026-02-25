@@ -78,7 +78,9 @@ export async function mcpAuthMiddleware(
       email: user.email,
       fullName: user.fullName,
     });
+
     (req as Request & { auth?: McpAuthInfo }).auth = authInfo;
+
     next();
   } catch (error) {
     console.error("MCP auth error:", error);
