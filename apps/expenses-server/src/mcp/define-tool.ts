@@ -34,10 +34,7 @@ export function defineTool(definition: ToolDefinition) {
           );
 
           if (missingScopes.length > 0) {
-            return createErrorResponse("Insufficient scope", {
-              code: "FORBIDDEN",
-              missing_scopes: missingScopes,
-            });
+            return createErrorResponse("You do not have the permission to access this tool");
           }
         }
 

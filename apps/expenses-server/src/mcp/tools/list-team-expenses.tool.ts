@@ -11,11 +11,8 @@ import { expenseService } from "../../services/expense.service";
 import { userRepository } from "../../db/repositories";
 import { MCP_SCOPES } from "../provider";
 import { createTextResponse, createErrorResponse } from "../types";
-import { ExpenseStatus, UserRoles } from "../../config/constants";
-import {
-  deriveRolesFromScopes,
-  isManagerOrHigher,
-} from "../../middleware/rbac.middleware";
+import { ExpenseStatus } from "../../config/constants";
+import { deriveRolesFromScopes } from "../../middleware/rbac.middleware";
 
 /**
  * Input schema for list_team_expenses tool
@@ -117,23 +114,7 @@ Note: You can only view expenses from users who report to you directly (your tea
       const roles =
         extra.authInfo.roles ?? deriveRolesFromScopes(extra.authInfo.scopes);
 
-      // Check RBAC: Only managers and finance_admins can view team expenses
-      if (!isManagerOrHigher({ roles })) {
-        return createErrorResponse("Access denied", {
-          code: "FORBIDDEN",
-          message: "Only managers and finance admins can view team expenses",
-          required_role: ["manager", "finance_admin"],
-          current_role: roles[0],
-        });
-      }
-
-      // Determine team/department to query
-      let department = args.team_id;
-
-      // If no team_id provided, use the manager's department
-      if (!department && roles[0] === UserRoles.MANAGER) {
-        department = user.department || undefined;
-      }
+      const department = args.team_id;
 
       const filters = {
         status: args.status,

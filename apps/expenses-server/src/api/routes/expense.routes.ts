@@ -4,8 +4,6 @@ import {
     authMiddleware,
     requireScopes,
     requireAnyScope,
-    requireManager,
-    requireFinanceAdmin,
     auditMiddleware
 } from '../../middleware';
 import { McpScopes } from '../../config/constants';
@@ -42,7 +40,6 @@ router.get(
  */
 router.get(
     '/team/:teamId',
-    requireManager,
     requireScopes(McpScopes.EXPENSE_VIEW_TEAM),
     expenseController.listTeamExpenses.bind(expenseController)
 );
@@ -53,7 +50,6 @@ router.get(
  */
 router.get(
     '/all',
-    requireFinanceAdmin,
     requireScopes(McpScopes.EXPENSE_VIEW_ALL),
     expenseController.listAllExpenses.bind(expenseController)
 );

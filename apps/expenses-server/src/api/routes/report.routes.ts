@@ -2,21 +2,23 @@ import { Router } from 'express';
 import { reportController } from '../controllers';
 import {
     authMiddleware,
-    requireFinanceAdmin,
+    requireScopes,
     auditMiddleware
 } from '../../middleware';
+import { McpScopes } from '../../config/constants';
 
 const router = Router();
 
-// All report routes require authentication and finance admin role
+// All report routes require authentication
 router.use(authMiddleware);
-router.use(requireFinanceAdmin);
 
 /**
  * POST /reports/generate - Generate expense report
+ * Required scope: expense:report:generate
  */
 router.post(
     '/generate',
+    requireScopes(McpScopes.EXPENSE_REPORT_GENERATE),
     auditMiddleware('report:generate', 'report'),
     reportController.generateReport.bind(reportController)
 );

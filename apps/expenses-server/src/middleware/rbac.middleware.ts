@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import {
   ForbiddenError,
-  InsufficientPermissionsError,
   UnauthorizedError,
 } from "../utils/errors";
 import { UserRoles, type UserRole, type McpScope } from "../config/constants";
@@ -75,13 +74,7 @@ export function requireScopes(...requiredScopes: McpScope[]): RequestHandler {
     );
 
     if (missingScopes.length > 0) {
-      next(
-        new InsufficientPermissionsError(
-          missingScopes[0] || "unknown",
-          userScopes,
-          `Missing required scopes: ${missingScopes.join(", ")}`,
-        ),
-      );
+      next(new ForbiddenError("You do not have permission to access this resource"));
       return;
     }
 
@@ -103,13 +96,7 @@ export function requireAnyScope(...anyOfScopes: McpScope[]): RequestHandler {
     const hasAnyScope = anyOfScopes.some((scope) => userScopes.includes(scope));
 
     if (!hasAnyScope) {
-      next(
-        new InsufficientPermissionsError(
-          anyOfScopes[0] || "unknown",
-          userScopes,
-          `Requires at least one of: ${anyOfScopes.join(", ")}`,
-        ),
-      );
+      next(new ForbiddenError("You do not have permission to access this resource"));
       return;
     }
 
