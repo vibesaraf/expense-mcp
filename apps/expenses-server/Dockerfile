@@ -1,5 +1,5 @@
 FROM node:22-alpine AS base
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@10.11.0 --activate
 
 FROM base AS deps
 
@@ -8,22 +8,29 @@ RUN apk add --no-cache python3 make g++
 WORKDIR /app
 
 COPY .npmrc package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json ./
-COPY apps/expenses-server/package.json ./apps/expenses-server/
-# Copy full workspace packages so symlinked node_modules entries have all source files
-COPY packages/typescript-config/ ./packages/typescript-config/
-COPY packages/eslint-config/ ./packages/eslint-config/
+COPY apps/client/package.json ./apps/client/package.json
+COPY apps/expenses-server/package.json ./apps/expenses-server/package.json
+COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
+COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
+COPY packages/ui/package.json ./packages/ui/package.json
 
-RUN corepack prepare pnpm@10.11.0 --activate && pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter expenses-server deploy --prod --legacy /app/deploy/expenses-server
 
 FROM base AS builder
 
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages ./packages
-COPY . .
+COPY --from=deps /app/apps/expenses-server/node_modules ./apps/expenses-server/node_modules
 
-RUN pnpm --filter expenses-server run build
+COPY apps/expenses-server/package.json ./apps/expenses-server/package.json
+COPY apps/expenses-server/tsconfig.json ./apps/expenses-server/tsconfig.json
+COPY apps/expenses-server/src ./apps/expenses-server/src
+COPY packages/typescript-config ./packages/typescript-config
+
+WORKDIR /app/apps/expenses-server
+RUN pnpm run build
 
 FROM node:22-alpine AS runner
 
@@ -31,7 +38,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/deploy/expenses-server/node_modules ./node_modules
 COPY --from=builder /app/apps/expenses-server/dist ./dist
 COPY --from=builder /app/apps/expenses-server/package.json ./package.json
 
