@@ -26,21 +26,21 @@ packages/
 
 ```bash
 # Root level (turbo)
-bun run dev           # Start all packages in dev mode
-bun run build         # Build all packages
-bun run lint          # Lint all packages
-bun run check-types   # Type check all packages
-bun run format        # Prettier format
+pnpm run dev           # Start all packages in dev mode
+pnpm run build         # Build all packages
+pnpm run lint          # Lint all packages
+pnpm run check-types   # Type check all packages
+pnpm run format        # Prettier format
 
 # Server level (apps/expenses-server)
-bun run dev           # Dev server with tsx watch (port 3000)
-bun run build         # Compile TS to dist/
-bun run db:seed       # Seed database with test data
-bun run db:reset      # Drop tables and reseed
-bun run typecheck     # tsc --noEmit
+pnpm run dev           # Dev server with tsx watch (port 3000)
+pnpm run build         # Compile TS to dist/
+pnpm run db:seed       # Seed database with test data
+pnpm run db:reset      # Drop tables and reseed
+pnpm run typecheck     # tsc --noEmit
 ```
 
-Package manager is **Bun**. Use `bun` instead of `npm`.
+Package manager is **pnpm**. Use `pnpm` instead of `npm`.
 
 ## Architecture
 

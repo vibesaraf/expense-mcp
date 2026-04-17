@@ -5,7 +5,7 @@
             "name": "Server: Local Debug",
             "type": "node",
             "request": "launch",
-            "runtimeExecutable": "bun",
+            "runtimeExecutable": "pnpm",
             "runtimeArgs": [
                 "run",
                 "dev"
@@ -22,7 +22,7 @@
             "name": "Client: Next.js (Server-side)",
             "type": "node",
             "request": "launch",
-            "runtimeExecutable": "bun",
+            "runtimeExecutable": "pnpm",
             "runtimeArgs": [
                 "run",
                 "dev"

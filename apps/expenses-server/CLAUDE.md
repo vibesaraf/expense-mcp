@@ -22,18 +22,18 @@ A combined MCP + REST API server for expense management with Scalekit authentica
 3. Install dependencies:
 
    ```bash
-   bun install
+   pnpm install
    ```
 
 4. Seed the database:
 
    ```bash
-   bun run db:seed
+   pnpm run db:seed
    ```
 
 5. Start the development server:
    ```bash
-   bun run dev
+   pnpm run dev
    ```
 
 ## API Endpoints
@@ -72,16 +72,16 @@ A combined MCP + REST API server for expense management with Scalekit authentica
 
 ```bash
 # Run in development mode
-bun run dev
+pnpm run dev
 
 # Reset and reseed database
-bun run db:reset
+pnpm run db:reset
 
 # Type check
-bun run typecheck
+pnpm run typecheck
 
 # Lint
-bun run lint
+pnpm run lint
 ```
 
 ## Environment Variables
