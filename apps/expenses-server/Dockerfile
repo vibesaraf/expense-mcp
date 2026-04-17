@@ -9,8 +9,9 @@ WORKDIR /app
 
 COPY .npmrc package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json ./
 COPY apps/expenses-server/package.json ./apps/expenses-server/
-COPY packages/typescript-config/package.json ./packages/typescript-config/
-COPY packages/eslint-config/package.json ./packages/eslint-config/
+# Copy full workspace packages so symlinked node_modules entries have all source files
+COPY packages/typescript-config/ ./packages/typescript-config/
+COPY packages/eslint-config/ ./packages/eslint-config/
 
 RUN corepack prepare pnpm@10.11.0 --activate && pnpm install --frozen-lockfile
 
@@ -19,6 +20,7 @@ FROM base AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages ./packages
 COPY . .
 
 RUN pnpm --filter expenses-server run build
