@@ -41,8 +41,7 @@ ENV NODE_ENV=production
 COPY --from=deps /app/deploy/expenses-server/node_modules ./node_modules
 COPY --from=builder /app/apps/expenses-server/dist ./dist
 COPY --from=builder /app/apps/expenses-server/package.json ./package.json
-
-RUN mkdir -p data
+COPY apps/expenses-server/data ./data
 
 EXPOSE 3001
 
