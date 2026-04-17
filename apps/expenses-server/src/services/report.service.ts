@@ -2,14 +2,14 @@ import {
   expenseRepository,
   userRepository,
   auditRepository,
-} from "../db/repositories";
-import type { AuthenticatedUser } from "../types/auth.types";
-import type { ReportResponse, ExpenseListResponse } from "../types/api.types";
-import type { GenerateReportInput } from "../api/validators/report.validator";
-import { ForbiddenError } from "../utils/errors";
-import { isFinanceAdmin } from "../middleware/rbac.middleware";
-import { generateUUID } from "../utils/uuid";
-import type { ExpenseStatusType, ReportType } from "../config/constants";
+} from "../db/repositories/index.js";
+import type { AuthenticatedUser } from "../types/auth.types.js";
+import type { ReportResponse, ExpenseListResponse } from "../types/api.types.js";
+import type { GenerateReportInput } from "../api/validators/report.validator.js";
+import { ForbiddenError } from "../utils/errors.js";
+import { isFinanceAdmin } from "../middleware/rbac.middleware.js";
+import { generateUUID } from "../utils/uuid.js";
+import type { ExpenseStatusType, ReportType } from "../config/constants.js";
 
 export class ReportService {
   /**

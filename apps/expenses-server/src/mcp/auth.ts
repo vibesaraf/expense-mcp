@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
-import { config } from "../config";
-import { userRepository } from "../db/repositories";
-import type { McpAuthInfo } from "./types";
-import { verifyIdToken, type TokenData } from "../utils/oidc";
-import { deriveRolesFromScopes } from "../middleware/rbac.middleware";
+import { config } from "../config/index.js";
+import { userRepository } from "../db/repositories/index.js";
+import type { McpAuthInfo } from "./types.js";
+import { verifyIdToken, type TokenData } from "../utils/oidc.js";
+import { deriveRolesFromScopes } from "../middleware/rbac.middleware.js";
 
 function extractBearerToken(authHeader?: string): string | null {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {

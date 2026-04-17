@@ -1,4 +1,4 @@
-import type { UserRole } from "../config/constants";
+import type { UserRole } from "../config/constants.js";
 
 /**
  * Authenticated user information extracted from LoginRadius token

@@ -1,14 +1,14 @@
 import type { Request, Response, NextFunction } from 'express';
-import { expenseService } from '../../services';
-import { sendSuccess, sendCreated } from '../../utils/response';
+import { expenseService } from '../../services/index.js';
+import { sendSuccess, sendCreated } from '../../utils/response.js';
 import {
     createExpenseSchema,
     listExpensesQuerySchema,
     listAllExpensesQuerySchema,
     approveExpenseSchema,
     rejectExpenseSchema,
-} from '../validators';
-import { ValidationError } from '../../utils/errors';
+} from '../validators/index.js';
+import { ValidationError } from '../../utils/errors.js';
 
 export class ExpenseController {
     /**

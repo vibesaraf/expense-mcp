@@ -1,5 +1,5 @@
-export { expenseRouter } from "./expense.routes";
-export { reportRouter } from "./report.routes";
-export { categoryRouter } from "./category.routes";
-export { wellKnownRouter } from "./well-known.routes";
-export { userRouter } from "./user.routes";
+export { expenseRouter } from "./expense.routes.js";
+export { reportRouter } from "./report.routes.js";
+export { categoryRouter } from "./category.routes.js";
+export { wellKnownRouter } from "./well-known.routes.js";
+export { userRouter } from "./user.routes.js";

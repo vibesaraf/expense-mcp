@@ -3,7 +3,7 @@
 // =============================================================================
 
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import type { UserRole } from "../config/constants";
+import type { UserRole } from "../config/constants.js";
 
 /**
  * Authentication info provided to MCP tools

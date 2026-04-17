@@ -5,7 +5,7 @@ import {
   categoryRouter,
   reportRouter,
   userRouter,
-} from "./routes";
+} from "./routes/index.js";
 
 const apiRouter: Router = Router();
 

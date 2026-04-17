@@ -1,5 +1,5 @@
 import { JWT, JWKS, JWKSObject } from "ts-jose";
-import { config as envConfig } from "../config";
+import { config as envConfig } from "../config/index.js";
 
 export interface TokenData {
   sub: string;

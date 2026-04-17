@@ -4,8 +4,8 @@ import express from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { config } from "../config";
-import { mcpAuthMiddleware } from "./auth";
+import { config } from "../config/index.js";
+import { mcpAuthMiddleware } from "./auth.js";
 import {
   submitExpenseTool,
   listMyExpensesTool,
@@ -14,7 +14,7 @@ import {
   rejectExpenseTool,
   generateReportTool,
   whoAmITool,
-} from "./tools";
+} from "./tools/index.js";
 
 /**
  * Register all MCP tools

@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
-import { config } from '../config';
+import { config } from '../config/index.js';
 
 // Singleton instance
 let dbInstance: Database.Database | null = null;

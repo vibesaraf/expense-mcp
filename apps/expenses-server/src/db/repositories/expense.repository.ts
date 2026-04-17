@@ -1,10 +1,10 @@
-import { BaseRepository } from './base';
+import { BaseRepository } from './base.js';
 import type {
   Expense,
   ExpenseWithCategory,
   ExpenseWithSubmitter,
   CreateExpenseInput
-} from '../../types/expense.types';
+} from '../../types/expense.types.js';
 import type {
   ExpenseRow,
   ExpenseWithCategoryRow,
@@ -13,10 +13,10 @@ import type {
   CategorySummaryRow,
   DepartmentSummaryRow,
   StatusSummaryRow
-} from '../types';
-import type { ExpenseStatusType } from '../../config/constants';
-import { generateUUID } from '../../utils/uuid';
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../config/constants';
+} from '../types.js';
+import type { ExpenseStatusType } from '../../config/constants.js';
+import { generateUUID } from '../../utils/uuid.js';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../config/constants.js';
 
 export interface ExpenseFilters {
   submitterId?: string;

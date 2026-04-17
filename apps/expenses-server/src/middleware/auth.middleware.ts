@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
-import { config } from "../config";
-import { userRepository } from "../db/repositories";
-import { ForbiddenError, UnauthorizedError } from "../utils/errors";
-import type { AuthenticatedUser } from "../types/auth.types";
-import { verifyIdToken } from "../utils/oidc";
-import { deriveRolesFromScopes } from "./rbac.middleware";
+import { config } from "../config/index.js";
+import { userRepository } from "../db/repositories/index.js";
+import { ForbiddenError, UnauthorizedError } from "../utils/errors.js";
+import type { AuthenticatedUser } from "../types/auth.types.js";
+import { verifyIdToken } from "../utils/oidc.js";
+import { deriveRolesFromScopes } from "./rbac.middleware.js";
 
 /**
  * Extract Bearer token from Authorization header

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ReportTypes, ExpenseStatus } from '../../config/constants';
+import { ReportTypes, ExpenseStatus } from '../../config/constants.js';
 
 /**
  * Schema for generating an expense report

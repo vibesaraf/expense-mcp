@@ -5,13 +5,13 @@
 // Required Scope: expense:approve
 // =============================================================================
 
-import { defineTool } from "../define-tool";
+import { defineTool } from "../define-tool.js";
 import { z } from "zod";
-import { expenseService } from "../../services/expense.service";
-import { userRepository } from "../../db/repositories";
-import { MCP_SCOPES } from "../provider";
-import { createTextResponse, createErrorResponse } from "../types";
-import { deriveRolesFromScopes } from "../../middleware/rbac.middleware";
+import { expenseService } from "../../services/expense.service.js";
+import { userRepository } from "../../db/repositories/index.js";
+import { MCP_SCOPES } from "../provider.js";
+import { createTextResponse, createErrorResponse } from "../types.js";
+import { deriveRolesFromScopes } from "../../middleware/rbac.middleware.js";
 
 /**
  * Input schema for approve_expense tool

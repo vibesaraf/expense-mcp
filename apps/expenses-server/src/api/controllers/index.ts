@@ -1,4 +1,4 @@
-export { expenseController } from "./expense.controller";
-export { reportController } from "./report.controller";
-export { categoryController } from "./category.controller";
-export { userController } from "./user.controller";
+export { expenseController } from "./expense.controller.js";
+export { reportController } from "./report.controller.js";
+export { categoryController } from "./category.controller.js";
+export { userController } from "./user.controller.js";

@@ -4,13 +4,13 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 
-import { config } from "./config";
-import { createMcpRouter } from "./mcp";
-import { apiRouter } from "./api";
-import { wellKnownRouter } from "./api/routes";
-import { errorHandler, notFoundHandler } from "./middleware";
-import { isDatabaseInitialized, getDb } from "./db";
-import { createTables } from "./db/schema";
+import { config } from "./config/index.js";
+import { createMcpRouter } from "./mcp/index.js";
+import { apiRouter } from "./api/index.js";
+import { wellKnownRouter } from "./api/routes/index.js";
+import { errorHandler, notFoundHandler } from "./middleware/index.js";
+import { isDatabaseInitialized, getDb } from "./db/index.js";
+import { createTables } from "./db/schema.js";
 
 // Initialize database
 if (!isDatabaseInitialized()) {

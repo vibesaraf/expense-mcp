@@ -5,14 +5,14 @@
 // Required Scope: expense:report:generate
 // =============================================================================
 
-import { defineTool } from "../define-tool";
+import { defineTool } from "../define-tool.js";
 import { z } from "zod";
-import { reportService } from "../../services/report.service";
-import { userRepository } from "../../db/repositories";
-import { MCP_SCOPES } from "../provider";
-import { createTextResponse, createErrorResponse } from "../types";
-import { ReportTypes, ExpenseStatus } from "../../config/constants";
-import { deriveRolesFromScopes } from "../../middleware/rbac.middleware";
+import { reportService } from "../../services/report.service.js";
+import { userRepository } from "../../db/repositories/index.js";
+import { MCP_SCOPES } from "../provider.js";
+import { createTextResponse, createErrorResponse } from "../types.js";
+import { ReportTypes, ExpenseStatus } from "../../config/constants.js";
+import { deriveRolesFromScopes } from "../../middleware/rbac.middleware.js";
 
 /**
  * Input schema for generate_report tool

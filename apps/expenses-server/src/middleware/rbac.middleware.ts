@@ -2,8 +2,8 @@ import type { Request, Response, NextFunction, RequestHandler } from "express";
 import {
   ForbiddenError,
   UnauthorizedError,
-} from "../utils/errors";
-import { UserRoles, type UserRole, type McpScope } from "../config/constants";
+} from "../utils/errors.js";
+import { UserRoles, type UserRole, type McpScope } from "../config/constants.js";
 
 const FINANCE_ADMIN_SCOPES: McpScope[] = [
   "expense:view:all",

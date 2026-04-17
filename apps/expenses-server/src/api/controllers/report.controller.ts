@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
-import { reportService } from '../../services';
-import { sendSuccess } from '../../utils/response';
-import { generateReportSchema } from '../validators';
-import { ValidationError } from '../../utils/errors';
+import { reportService } from '../../services/index.js';
+import { sendSuccess } from '../../utils/response.js';
+import { generateReportSchema } from '../validators/index.js';
+import { ValidationError } from '../../utils/errors.js';
 
 export class ReportController {
     /**

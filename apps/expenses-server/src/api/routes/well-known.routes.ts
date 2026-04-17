@@ -1,4 +1,4 @@
-import { config } from "@/config";
+import { config } from "../../config/index.js";
 import { Router, type Router as ExpressRouter } from "express";
 
 const router: ExpressRouter = Router();

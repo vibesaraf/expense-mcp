@@ -1,8 +1,8 @@
 import "dotenv/config";
-import { getDb, closeDb, isDatabaseInitialized } from "./index";
-import { createTables } from "./schema";
-import { generateUUID } from "../utils/uuid";
-import { DEFAULT_CATEGORIES } from "../config/constants";
+import { getDb, closeDb, isDatabaseInitialized } from "./index.js";
+import { createTables } from "./schema.js";
+import { generateUUID } from "../utils/uuid.js";
+import { DEFAULT_CATEGORIES } from "../config/constants.js";
 
 /**
  * Seed expense categories

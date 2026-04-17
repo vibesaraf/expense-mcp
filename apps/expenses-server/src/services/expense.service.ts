@@ -5,26 +5,26 @@ import {
   approvalRepository,
   auditRepository,
   type ExpenseFilters,
-} from "../db/repositories";
+} from "../db/repositories/index.js";
 import type {
   Expense,
   ExpenseWithSubmitter,
   ExpenseWithApprovalHistory,
   CreateExpenseInput,
-} from "../types/expense.types";
-import type { AuthenticatedUser } from "../types/auth.types";
+} from "../types/expense.types.js";
+import type { AuthenticatedUser } from "../types/auth.types.js";
 import {
   NotFoundError,
   ValidationError,
   ForbiddenError,
   ConflictError,
   UnauthorizedError,
-} from "../utils/errors";
-import { ExpenseStatus } from "../config/constants";
+} from "../utils/errors.js";
+import { ExpenseStatus } from "../config/constants.js";
 import {
   isFinanceAdmin,
   isManagerOrHigher,
-} from "../middleware/rbac.middleware";
+} from "../middleware/rbac.middleware.js";
 
 export class ExpenseService {
   /**

@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { getDb } from '../index';
+import { getDb } from '../index.js';
 
 /**
  * Base repository with common database utilities

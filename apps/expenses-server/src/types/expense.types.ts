@@ -1,4 +1,4 @@
-import type { ExpenseStatusType } from '../config/constants';
+import type { ExpenseStatusType } from '../config/constants.js';
 
 export interface Expense {
     expenseId: string;

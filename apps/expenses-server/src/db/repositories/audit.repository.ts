@@ -1,6 +1,6 @@
-import { BaseRepository } from './base';
-import type { AuditLog } from '../../types/expense.types';
-import type { AuditLogRow } from '../types';
+import { BaseRepository } from './base.js';
+import type { AuditLog } from '../../types/expense.types.js';
+import type { AuditLogRow } from '../types.js';
 
 export interface CreateAuditLogInput {
     userId: string;

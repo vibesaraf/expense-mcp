@@ -5,9 +5,9 @@
 // Required Scope: none (any authenticated user)
 // =============================================================================
 
-import { defineTool } from "../define-tool";
-import { userRepository } from "../../db/repositories";
-import { createTextResponse, createErrorResponse } from "../types";
+import { defineTool } from "../define-tool.js";
+import { userRepository } from "../../db/repositories/index.js";
+import { createTextResponse, createErrorResponse } from "../types.js";
 
 /**
  * Who Am I Tool

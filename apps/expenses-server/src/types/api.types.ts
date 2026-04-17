@@ -1,4 +1,4 @@
-import type { ExpenseStatusType, ReportType } from '../config/constants';
+import type { ExpenseStatusType, ReportType } from '../config/constants.js';
 
 // Query parameters
 export interface ExpenseQueryParams {

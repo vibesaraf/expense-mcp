@@ -1,7 +1,7 @@
-import { BaseRepository } from './base';
-import type { ExpenseApproval, ApprovalHistoryItem } from '../../types/expense.types';
-import type { ExpenseApprovalRow, ExpenseApprovalWithApproverRow } from '../types';
-import type { ApprovalActionType } from '../../config/constants';
+import { BaseRepository } from './base.js';
+import type { ExpenseApproval, ApprovalHistoryItem } from '../../types/expense.types.js';
+import type { ExpenseApprovalRow, ExpenseApprovalWithApproverRow } from '../types.js';
+import type { ApprovalActionType } from '../../config/constants.js';
 
 export class ApprovalRepository extends BaseRepository {
     /**

@@ -1,10 +1,10 @@
-import { BaseRepository } from "./base";
+import { BaseRepository } from "./base.js";
 import type {
   User,
   CreateUserInput,
   UpdateUserInput,
-} from "../../types/user.types";
-import type { UserRow } from "../types";
+} from "../../types/user.types.js";
+import type { UserRow } from "../types.js";
 
 export class UserRepository extends BaseRepository {
   /**

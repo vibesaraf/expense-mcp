@@ -1,6 +1,6 @@
-import { BaseRepository } from './base';
-import type { ExpenseCategory } from '../../types/expense.types';
-import type { ExpenseCategoryRow } from '../types';
+import { BaseRepository } from './base.js';
+import type { ExpenseCategory } from '../../types/expense.types.js';
+import type { ExpenseCategoryRow } from '../types.js';
 
 export class CategoryRepository extends BaseRepository {
     /**

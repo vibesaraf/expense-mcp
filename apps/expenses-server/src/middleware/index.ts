@@ -1,4 +1,4 @@
-export { authMiddleware, optionalAuthMiddleware } from './auth.middleware';
+export { authMiddleware, optionalAuthMiddleware } from './auth.middleware.js';
 export {
     requireRoles,
     requireScopes,
@@ -8,6 +8,6 @@ export {
     hasRole,
     isFinanceAdmin,
     isManagerOrHigher,
-} from './rbac.middleware';
-export { errorHandler, notFoundHandler } from './error.middleware';
-export { auditMiddleware } from './audit.middleware';
+} from './rbac.middleware.js';
+export { errorHandler, notFoundHandler } from './error.middleware.js';
+export { auditMiddleware } from './audit.middleware.js';

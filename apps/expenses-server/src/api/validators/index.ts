@@ -1,3 +1,3 @@
-export * from "./expense.validator";
-export * from "./report.validator";
-export * from "./user.validator";
+export * from "./expense.validator.js";
+export * from "./report.validator.js";
+export * from "./user.validator.js";

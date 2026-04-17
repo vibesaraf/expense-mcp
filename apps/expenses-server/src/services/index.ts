@@ -1,3 +1,3 @@
-export { expenseService, ExpenseService } from "./expense.service";
-export { reportService, ReportService } from "./report.service";
-export { userService, UserService } from "./user.service";
+export { expenseService, ExpenseService } from "./expense.service.js";
+export { reportService, ReportService } from "./report.service.js";
+export { userService, UserService } from "./user.service.js";

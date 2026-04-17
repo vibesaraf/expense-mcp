@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
-import { AppError } from '../utils/errors';
-import { sendError } from '../utils/response';
-import { config } from '../config';
+import { AppError } from '../utils/errors.js';
+import { sendError } from '../utils/response.js';
+import { config } from '../config/index.js';
 
 /**
  * Global error handler middleware

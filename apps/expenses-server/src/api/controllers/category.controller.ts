@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { categoryRepository } from '../../db/repositories';
-import { sendSuccess } from '../../utils/response';
+import { categoryRepository } from '../../db/repositories/index.js';
+import { sendSuccess } from '../../utils/response.js';
 
 export class CategoryController {
     /**

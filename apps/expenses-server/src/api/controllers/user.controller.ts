@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
-import { userService } from "../../services";
-import { sendCreated } from "../../utils/response";
-import { registerUserSchema } from "../validators";
-import { ValidationError } from "../../utils/errors";
+import { userService } from "../../services/index.js";
+import { sendCreated } from "../../utils/response.js";
+import { registerUserSchema } from "../validators/index.js";
+import { ValidationError } from "../../utils/errors.js";
 
 export class UserController {
   /**

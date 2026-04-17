@@ -4,8 +4,8 @@ import type {
   McpToolExtra,
   ToolHandlerNoInput,
   ToolHandlerWithInput,
-} from "./types";
-import { createErrorResponse } from "./types";
+} from "./types.js";
+import { createErrorResponse } from "./types.js";
 
 type ToolDefinition = {
   name: string;

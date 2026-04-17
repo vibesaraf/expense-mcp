@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { expenseController } from '../controllers';
+import { expenseController } from '../controllers/index.js';
 import {
     authMiddleware,
     requireScopes,
     requireAnyScope,
     auditMiddleware
-} from '../../middleware';
-import { McpScopes } from '../../config/constants';
+} from '../../middleware/index.js';
+import { McpScopes } from '../../config/constants.js';
 
 const router = Router();
 

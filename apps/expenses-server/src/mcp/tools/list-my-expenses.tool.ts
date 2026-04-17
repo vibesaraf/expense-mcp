@@ -5,14 +5,14 @@
 // Required Scope: expense:view:own
 // =============================================================================
 
-import { defineTool } from "../define-tool";
+import { defineTool } from "../define-tool.js";
 import { z } from "zod";
-import { expenseService } from "../../services/expense.service";
-import { MCP_SCOPES } from "../provider";
-import { createTextResponse, createErrorResponse } from "../types";
-import { ExpenseStatus } from "../../config/constants";
-import { userRepository } from "../../db/repositories";
-import { deriveRolesFromScopes } from "../../middleware/rbac.middleware";
+import { expenseService } from "../../services/expense.service.js";
+import { MCP_SCOPES } from "../provider.js";
+import { createTextResponse, createErrorResponse } from "../types.js";
+import { ExpenseStatus } from "../../config/constants.js";
+import { userRepository } from "../../db/repositories/index.js";
+import { deriveRolesFromScopes } from "../../middleware/rbac.middleware.js";
 
 /**
  * Input schema for list_my_expenses tool

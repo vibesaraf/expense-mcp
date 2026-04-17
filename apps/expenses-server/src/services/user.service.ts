@@ -1,7 +1,7 @@
-import { userRepository } from "../db/repositories";
-import type { RegisterUserInput } from "../api/validators/user.validator";
-import { ConflictError, NotFoundError } from "../utils/errors";
-import { generateUUID } from "../utils/uuid";
+import { userRepository } from "../db/repositories/index.js";
+import type { RegisterUserInput } from "../api/validators/user.validator.js";
+import { ConflictError, NotFoundError } from "../utils/errors.js";
+import { generateUUID } from "../utils/uuid.js";
 
 export class UserService {
   registerUser(input: RegisterUserInput) {

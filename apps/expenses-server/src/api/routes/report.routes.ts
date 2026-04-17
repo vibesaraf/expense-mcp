@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { reportController } from '../controllers';
+import { reportController } from '../controllers/index.js';
 import {
     authMiddleware,
     requireScopes,
     auditMiddleware
-} from '../../middleware';
-import { McpScopes } from '../../config/constants';
+} from '../../middleware/index.js';
+import { McpScopes } from '../../config/constants.js';
 
 const router = Router();
 
