@@ -1,0 +1,33 @@
+services:
+  expenses-server:
+    build:
+      context: .
+      dockerfile: apps/expenses-server/Dockerfile
+    ports:
+      - "3001"
+    volumes:
+      - expense_data:/app/data
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      DATABASE_PATH: /app/data/expense.db
+      SERVER_URL: ${SERVER_URL}
+      LR_ISSUER: ${LR_ISSUER}
+      LR_INTROSPECT_URL: ${LR_INTROSPECT_URL}
+      LR_JWKS_URI: ${LR_JWKS_URI}
+      LR_CLIENT_ID: ${LR_CLIENT_ID}
+      LR_CLIENT_SECRET: ${LR_CLIENT_SECRET}
+      LR_TOKEN_ENDPOINT_AUTH_METHOD: ${LR_TOKEN_ENDPOINT_AUTH_METHOD:-client_secret_post}
+      MCP_RESOURCE_URL: ${MCP_RESOURCE_URL}
+      PROTECTED_RESOURCE_METADATA: ${PROTECTED_RESOURCE_METADATA}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  expense_data:

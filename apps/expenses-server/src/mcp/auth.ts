@@ -63,7 +63,6 @@ export async function mcpAuthMiddleware(
       audience: config.MCP_RESOURCE_URL,
     });
 
-    const lrScopes = tokenData.scopes;
     const email = tokenData.claims.email as string | undefined;
     const user = userRepository.findByLrUserIdOrEmail(tokenData.sub, email);
 
