@@ -42,59 +42,59 @@ function seedTestUsers(): void {
   `);
 
   // Test users structure:
-  // - Finance Admin (Carol) - no manager
-  // - Engineering Manager (Bob) - reports to Carol
-  // - Engineering Employees (Alice, Dave) - report to Bob
-  // - Sales Manager (Eve) - reports to Carol
-  // - Sales Employee (Frank) - reports to Eve
+  // - Finance Admin (finance_1) - no manager
+  // - Engineering Manager (manager_1) - reports to finance_1
+  // - Engineering Employees (employee_1, employee_2) - report to manager_1
+  // - Sales Manager (manager_2) - reports to finance_1
+  // - Sales Employee (employee_3) - reports to manager_2
 
   const testUsers = [
     // Finance Admin
     {
-      userId: "user_finance",
-      email: "finance@yopmail.com",
-      fullName: "Finance Guy",
+      userId: "finance_1",
+      email: "finance-1@loginradius.com",
+      fullName: "Finance 1",
       department: "Finance",
       managerId: null,
     },
     // Engineering Manager
     {
-      userId: "engineer_manager",
-      email: "manager-engineer@yopmail.com",
-      fullName: "Engineer Manager Guy",
+      userId: "manager_1",
+      email: "manager-1@loginradius.com",
+      fullName: "Manager 1",
       department: "Engineering",
-      managerId: "user_finance",
+      managerId: "finance_1",
     },
     // Engineering Employees
     {
-      userId: "engineer_employee",
-      email: "employee-engineer@yopmail.com",
-      fullName: "Engineer Employee Guy",
+      userId: "employee_1",
+      email: "employee-1@loginradius.com",
+      fullName: "Employee 1",
       department: "Engineering",
-      managerId: "engineer_manager",
+      managerId: "manager_1",
     },
     {
-      userId: "engineer_employee_2",
-      email: "employee-engineer-2@company.com",
-      fullName: "Engineer Employee 2 Guy",
+      userId: "employee_2",
+      email: "employee-2@loginradius.com",
+      fullName: "Employee 2",
       department: "Engineering",
-      managerId: "engineer_manager",
+      managerId: "manager_1",
     },
     // Sales Manager
     {
-      userId: "sales_manager",
-      email: "manager-sales@yopmail.com",
-      fullName: "Sales Manager Guy",
+      userId: "manager_2",
+      email: "manager-2@loginradius.com",
+      fullName: "Manager 2",
       department: "Sales",
-      managerId: "user_finance",
+      managerId: "finance_1",
     },
     // Sales Employee
     {
-      userId: "sales_employee",
-      email: "sales_employee@yopmail.com",
-      fullName: "Sales Employee Guy",
+      userId: "employee_3",
+      email: "employee-3@loginradius.com",
+      fullName: "Employee 3",
       department: "Sales",
-      managerId: "sales_manager",
+      managerId: "manager_2",
     },
   ];
 
@@ -125,22 +125,22 @@ function seedSampleExpenses(): void {
   `);
 
   const sampleExpenses = [
-    // Alice's expenses (Engineering employee)
+    // employee_1's expenses (Engineering employee)
     {
       expenseId: generateUUID(),
-      submitterId: "engineer_employee",
+      submitterId: "employee_1",
       categoryId: 1, // Meals
       amount: 45.5,
       currency: "USD",
       description: "Team lunch with client from Acme Corp",
       expenseDate: "2026-01-28",
-      receiptUrl: "https://storage.example.com/receipts/alice_lunch_01.pdf",
+      receiptUrl: "https://storage.example.com/receipts/employee1_lunch_01.pdf",
       status: "pending",
       submittedOffset: "-5 days",
     },
     {
       expenseId: generateUUID(),
-      submitterId: "engineer_employee",
+      submitterId: "employee_1",
       categoryId: 4, // Software
       amount: 299.0,
       currency: "USD",
@@ -152,21 +152,21 @@ function seedSampleExpenses(): void {
     },
     {
       expenseId: generateUUID(),
-      submitterId: "engineer_employee",
+      submitterId: "employee_1",
       categoryId: 2, // Travel
       amount: 850.0,
       currency: "USD",
       description: "Flight to SF for tech conference",
       expenseDate: "2026-01-20",
-      receiptUrl: "https://storage.example.com/receipts/alice_flight.pdf",
+      receiptUrl: "https://storage.example.com/receipts/employee1_flight.pdf",
       status: "approved",
       submittedOffset: "-12 days",
     },
 
-    // Dave's expenses (Engineering employee)
+    // employee_2's expenses (Engineering employee)
     {
       expenseId: generateUUID(),
-      submitterId: "engineer_employee_2",
+      submitterId: "employee_2",
       categoryId: 3, // Office supplies
       amount: 125.0,
       currency: "USD",
@@ -178,53 +178,53 @@ function seedSampleExpenses(): void {
     },
     {
       expenseId: generateUUID(),
-      submitterId: "engineer_employee_2",
+      submitterId: "employee_2",
       categoryId: 5, // Training
       amount: 1500.0,
       currency: "USD",
       description: "AWS Solutions Architect certification course",
       expenseDate: "2026-01-10",
-      receiptUrl: "https://storage.example.com/receipts/dave_aws_cert.pdf",
+      receiptUrl: "https://storage.example.com/receipts/employee2_aws_cert.pdf",
       status: "rejected",
       submittedOffset: "-23 days",
     },
 
-    // Frank's expenses (Sales employee)
+    // employee_3's expenses (Sales employee)
     {
       expenseId: generateUUID(),
-      submitterId: "sales_employee",
+      submitterId: "employee_3",
       categoryId: 1, // Meals
       amount: 175.0,
       currency: "USD",
       description: "Client dinner at Nobu",
       expenseDate: "2026-01-30",
-      receiptUrl: "https://storage.example.com/receipts/frank_dinner.pdf",
+      receiptUrl: "https://storage.example.com/receipts/employee3_dinner.pdf",
       status: "pending",
       submittedOffset: "-3 days",
     },
     {
       expenseId: generateUUID(),
-      submitterId: "sales_employee",
+      submitterId: "employee_3",
       categoryId: 2, // Travel
       amount: 2100.0,
       currency: "USD",
       description: "Sales trip to NYC - flight and hotel",
       expenseDate: "2026-01-18",
-      receiptUrl: "https://storage.example.com/receipts/frank_nyc_trip.pdf",
+      receiptUrl: "https://storage.example.com/receipts/employee3_nyc_trip.pdf",
       status: "approved",
       submittedOffset: "-15 days",
     },
 
-    // Bob's expenses (Engineering Manager)
+    // manager_1's expenses (Engineering Manager)
     {
       expenseId: generateUUID(),
-      submitterId: "engineer_manager",
+      submitterId: "manager_1",
       categoryId: 1, // Meals
       amount: 320.0,
       currency: "USD",
       description: "Team building dinner for engineering",
       expenseDate: "2026-01-22",
-      receiptUrl: "https://storage.example.com/receipts/bob_team_dinner.pdf",
+      receiptUrl: "https://storage.example.com/receipts/manager1_team_dinner.pdf",
       status: "approved",
       submittedOffset: "-11 days",
     },
@@ -280,7 +280,7 @@ function seedApprovals(): void {
       )
       .get(expense.submitter_id) as { manager_id: string } | undefined;
 
-    const approverId = submitter?.manager_id || "user_finance";
+    const approverId = submitter?.manager_id || "finance_1";
 
     const expenseStatus = db
       .prepare(
