@@ -283,8 +283,8 @@ export class UserRepository extends BaseRepository {
     const rows = this.db
       .prepare(
         `
-      SELECT DISTINCT department FROM users 
-      WHERE department IS NOT NULL 
+      SELECT DISTINCT department FROM users
+      WHERE department IS NOT NULL
       ORDER BY department
     `,
       )

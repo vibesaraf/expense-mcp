@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Server — API & MCP Reference</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface-2: #222535;
+      --border: #2e3247;
+      --accent: #6c8fff;
+      --accent-dim: #1e2a4a;
+      --green: #4ade80;
+      --green-dim: #14291e;
+      --yellow: #facc15;
+      --yellow-dim: #2a2209;
+      --red: #f87171;
+      --red-dim: #2a1111;
+      --purple: #c084fc;
+      --purple-dim: #22143a;
+      --orange: #fb923c;
+      --orange-dim: #2a1a08;
+      --text: #e2e8f0;
+      --text-muted: #8892a4;
+      --text-dim: #64748b;
+      --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      --sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    .layout { display: flex; min-height: 100vh; }
+
+    nav {
+      width: 260px;
+      min-width: 260px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 0 0 24px;
+    }
+
+    .nav-logo {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+
+    .nav-logo h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .nav-logo p {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 2px;
+      font-family: var(--mono);
+    }
+
+    .nav-section {
+      padding: 8px 12px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    nav a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 20px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    nav a:hover {
+      color: var(--text);
+      background: var(--surface-2);
+      border-left-color: var(--accent);
+    }
+
+    nav a .badge {
+      margin-left: auto;
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    main {
+      flex: 1;
+      padding: 40px 48px;
+      max-width: 960px;
+    }
+
+    /* Hero */
+    .hero {
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+      font-family: var(--mono);
+    }
+
+    .hero h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 600px;
+      line-height: 1.7;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 24px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .hero-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .hero-meta-item label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .hero-meta-item span {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    /* Section headers */
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .section-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .section-icon.rest { background: var(--accent-dim); }
+    .section-icon.mcp { background: var(--purple-dim); }
+    .section-icon.auth { background: var(--yellow-dim); }
+
+    .section-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.4px;
+    }
+
+    .section-header p {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* Architecture diagram */
+    .arch-diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 40px;
+      overflow-x: auto;
+    }
+
+    .arch-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .arch-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .arch-box.accent { border-color: var(--accent); color: var(--accent); }
+    .arch-box.purple { border-color: var(--purple); color: var(--purple); }
+    .arch-box.green { border-color: var(--green); color: var(--green); }
+    .arch-box.yellow { border-color: var(--yellow); color: var(--yellow); }
+
+    .arch-arrow {
+      color: var(--text-dim);
+      font-size: 18px;
+    }
+
+    .arch-label {
+      text-align: center;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin: 4px 0 12px;
+    }
+
+    /* Endpoint cards */
+    .endpoint-group {
+      margin-bottom: 32px;
+    }
+
+    .endpoint-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .endpoint-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+
+    .endpoint-card:hover { border-color: var(--accent); }
+
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .method {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      min-width: 48px;
+      text-align: center;
+    }
+
+    .method.GET  { background: var(--green-dim);  color: var(--green); }
+    .method.POST { background: var(--accent-dim); color: var(--accent); }
+    .method.PUT  { background: var(--yellow-dim); color: var(--yellow); }
+    .method.DEL  { background: var(--red-dim);    color: var(--red); }
+
+    .endpoint-path {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .endpoint-path .param { color: var(--orange); }
+
+    .endpoint-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .endpoint-expand {
+      color: var(--text-dim);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .endpoint-body {
+      border-top: 1px solid var(--border);
+      padding: 16px 18px;
+      display: none;
+      background: var(--surface-2);
+    }
+
+    .endpoint-body.open { display: block; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+
+    .detail-section h4 {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .param-row {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .param-name {
+      font-family: var(--mono);
+      color: var(--orange);
+      min-width: 130px;
+      flex-shrink: 0;
+    }
+
+    .param-type {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      background: var(--bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .param-required {
+      font-size: 10px;
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .param-optional {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .param-desc {
+      color: var(--text-muted);
+    }
+
+    .scope-badge {
+      display: inline-flex;
+      align-items: center;
+      background: var(--purple-dim);
+      border: 1px solid var(--purple);
+      color: var(--purple);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 6px;
+      margin-bottom: 4px;
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 6px;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .role-badge.employee { background: var(--green-dim); color: var(--green); }
+    .role-badge.manager  { background: var(--accent-dim); color: var(--accent); }
+    .role-badge.finance  { background: var(--yellow-dim); color: var(--yellow); }
+
+    /* MCP tool cards */
+    .mcp-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+
+    .mcp-card:hover { border-color: var(--purple); }
+
+    .mcp-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .mcp-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--purple-dim);
+      color: var(--purple);
+      letter-spacing: 0.3px;
+    }
+
+    .mcp-name {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .mcp-body {
+      border-top: 1px solid var(--border);
+      padding: 16px 18px;
+      display: none;
+      background: var(--surface-2);
+    }
+
+    .mcp-body.open { display: block; }
+
+    /* Code blocks */
+    pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text);
+      margin-top: 8px;
+    }
+
+    .string { color: var(--green); }
+    .key { color: var(--accent); }
+    .number { color: var(--orange); }
+    .bool { color: var(--purple); }
+    .comment { color: var(--text-dim); font-style: italic; }
+
+    /* Auth / Roles section */
+    .role-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .role-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: var(--surface-2);
+      color: var(--text-dim);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .role-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+      vertical-align: top;
+    }
+
+    .role-table tr:last-child td { border-bottom: none; }
+    .role-table tr:hover td { background: var(--surface-2); }
+
+    .scope-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .scope-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: var(--surface-2);
+      color: var(--text-dim);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .scope-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+      vertical-align: top;
+    }
+
+    .scope-table tr:last-child td { border-bottom: none; }
+
+    /* Status flow */
+    .status-flow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .status-node {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-node.pending  { background: var(--yellow-dim);  color: var(--yellow); }
+    .status-node.approved { background: var(--accent-dim);  color: var(--accent); }
+    .status-node.paid     { background: var(--green-dim);   color: var(--green); }
+    .status-node.rejected { background: var(--red-dim);     color: var(--red); }
+
+    .flow-arrow { color: var(--text-dim); font-size: 16px; }
+    .flow-branch { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+
+    /* Info callout */
+    .callout {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      font-size: 13px;
+      border: 1px solid;
+    }
+
+    .callout.info    { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+    .callout.warn    { background: var(--yellow-dim); border-color: var(--yellow); color: var(--text); }
+    .callout.success { background: var(--green-dim);  border-color: var(--green);  color: var(--text); }
+
+    .callout-icon { font-size: 16px; flex-shrink: 0; line-height: 1.4; }
+
+    /* Footer */
+    .footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: gap;
+    }
+
+    .footer code {
+      font-family: var(--mono);
+      background: var(--surface-2);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* Tags inside tables */
+    code {
+      font-family: var(--mono);
+      font-size: 11px;
+      background: var(--surface-2);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: var(--orange);
+    }
+
+    @media (max-width: 900px) {
+      nav { display: none; }
+      main { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar Nav -->
+  <nav>
+    <div class="nav-logo">
+      <h1>Expense Server</h1>
+      <p>:3000 · REST + MCP</p>
+    </div>
+
+    <div class="nav-section">Overview</div>
+    <a href="#overview">Architecture</a>
+    <a href="#auth">Auth & Roles <span class="badge" style="background:var(--yellow-dim);color:var(--yellow)">JWT</span></a>
+    <a href="#status-flow">Status Flow</a>
+
+    <div class="nav-section">REST API</div>
+    <a href="#ep-expenses">Expenses <span class="badge" style="background:var(--accent-dim);color:var(--accent)">7</span></a>
+    <a href="#ep-categories">Categories</a>
+    <a href="#ep-reports">Reports</a>
+    <a href="#ep-users">Users</a>
+    <a href="#ep-health">Health</a>
+
+    <div class="nav-section">MCP Tools</div>
+    <a href="#mcp-whoami">who_am_i</a>
+    <a href="#mcp-submit">submit_expense</a>
+    <a href="#mcp-listmine">list_my_expenses</a>
+    <a href="#mcp-listteam">list_team_expenses</a>
+    <a href="#mcp-approve">approve_expense</a>
+    <a href="#mcp-reject">reject_expense</a>
+    <a href="#mcp-report">generate_report</a>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+
+    <!-- Hero -->
+    <div class="hero" id="overview">
+      <div class="hero-tag">🧾 Expense Server v1.0</div>
+      <h1>API & MCP Reference</h1>
+      <p>
+        Dual-interface expense management system. Exposes a REST API for traditional HTTP clients
+        and an MCP (Model Context Protocol) server for AI agent integrations.
+        Auth via LoginRadius OAuth 2.1 — every endpoint is JWT-gated.
+      </p>
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <label>Base URL</label>
+          <span>http://localhost:3000</span>
+        </div>
+        <div class="hero-meta-item">
+          <label>REST prefix</label>
+          <span>/api/*</span>
+        </div>
+        <div class="hero-meta-item">
+          <label>MCP endpoint</label>
+          <span>/mcp</span>
+        </div>
+        <div class="hero-meta-item">
+          <label>Auth</label>
+          <span>Bearer JWT (LoginRadius)</span>
+        </div>
+        <div class="hero-meta-item">
+          <label>Database</label>
+          <span>SQLite (WAL mode)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="section">
+      <div class="arch-diagram">
+        <div class="arch-label">Client Layer</div>
+        <div class="arch-row">
+          <div class="arch-box accent">HTTP Client / Browser</div>
+          <div class="arch-box purple">AI Agent (MCP client)</div>
+        </div>
+        <div class="arch-row"><div class="arch-arrow">↓</div></div>
+        <div class="arch-label">Transport</div>
+        <div class="arch-row">
+          <div class="arch-box accent">REST  /api/*</div>
+          <div class="arch-box purple">MCP  /mcp  (JSON-RPC 2.0)</div>
+        </div>
+        <div class="arch-row"><div class="arch-arrow">↓</div></div>
+        <div class="arch-label">Middleware (applies to both)</div>
+        <div class="arch-row">
+          <div class="arch-box yellow">authMiddleware (LoginRadius JWT)</div>
+          <div class="arch-box yellow">requireRoles / requireScopes</div>
+          <div class="arch-box yellow">auditMiddleware</div>
+        </div>
+        <div class="arch-row"><div class="arch-arrow">↓</div></div>
+        <div class="arch-label">Business Logic</div>
+        <div class="arch-row">
+          <div class="arch-box green">Controllers / MCP Tools</div>
+          <div class="arch-box">→</div>
+          <div class="arch-box green">Services</div>
+          <div class="arch-box">→</div>
+          <div class="arch-box green">Repositories</div>
+          <div class="arch-box">→</div>
+          <div class="arch-box green">SQLite</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth & Roles -->
+    <div class="section" id="auth">
+      <div class="section-header">
+        <div class="section-icon auth">🔑</div>
+        <div>
+          <h2>Auth & Roles</h2>
+          <p>LoginRadius JWT · OAuth 2.1 scopes · RBAC</p>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-icon">ℹ️</div>
+        <div>
+          All protected endpoints require <code>Authorization: Bearer &lt;JWT&gt;</code>. Roles are
+          extracted from LoginRadius token claims. Scopes are extracted from the <code>scope</code>
+          claim. A request can fail auth (<code>401</code>), role check (<code>403</code>), or scope
+          check (<code>403</code>) independently.
+        </div>
+      </div>
+
+      <h4 style="margin-bottom:10px;font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;">Roles</h4>
+      <table class="role-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Who</th>
+            <th>Capabilities</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="role-badge employee">employee</span></td>
+            <td>All users (default)</td>
+            <td>Submit expenses, view own expenses</td>
+          </tr>
+          <tr>
+            <td><span class="role-badge manager">manager</span></td>
+            <td>Department managers</td>
+            <td>All employee + view/approve/reject team expenses</td>
+          </tr>
+          <tr>
+            <td><span class="role-badge finance">finance_admin</span></td>
+            <td>Finance team</td>
+            <td>All manager + view all expenses, generate reports, register users</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4 style="margin:20px 0 10px;font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;">OAuth 2.1 Scopes</h4>
+      <table class="scope-table">
+        <thead>
+          <tr><th>Scope</th><th>Purpose</th><th>Min role</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="scope-badge">expense:submit</span></td>
+            <td>Submit new expenses</td>
+            <td><span class="role-badge employee">employee</span></td>
+          </tr>
+          <tr>
+            <td><span class="scope-badge">expense:view:own</span></td>
+            <td>View own expenses</td>
+            <td><span class="role-badge employee">employee</span></td>
+          </tr>
+          <tr>
+            <td><span class="scope-badge">expense:view:team</span></td>
+            <td>View direct reports' expenses</td>
+            <td><span class="role-badge manager">manager</span></td>
+          </tr>
+          <tr>
+            <td><span class="scope-badge">expense:view:all</span></td>
+            <td>View all expenses system-wide</td>
+            <td><span class="role-badge finance">finance_admin</span></td>
+          </tr>
+          <tr>
+            <td><span class="scope-badge">expense:approve</span></td>
+            <td>Approve or reject expenses</td>
+            <td><span class="role-badge manager">manager</span></td>
+          </tr>
+          <tr>
+            <td><span class="scope-badge">expense:report:generate</span></td>
+            <td>Generate expense reports</td>
+            <td><span class="role-badge finance">finance_admin</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Status Flow -->
+    <div class="section" id="status-flow">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--green-dim)">📊</div>
+        <div>
+          <h2>Expense Status Flow</h2>
+          <p>Valid transitions between expense states</p>
+        </div>
+      </div>
+      <div class="status-flow">
+        <span class="status-node pending">pending</span>
+        <span class="flow-arrow">→</span>
+        <div class="flow-branch">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="status-node approved">approved</span>
+            <span class="flow-arrow">→</span>
+            <span class="status-node paid">paid</span>
+          </div>
+          <span class="status-node rejected">rejected</span>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:10px;">
+        Transitions are permanent. Only <code>pending</code> expenses can be approved or rejected.
+        Once <code>approved</code>, finance can mark as <code>paid</code>.
+      </p>
+    </div>
+
+    <!-- REST API -->
+    <div class="section" id="ep-expenses">
+      <div class="section-header">
+        <div class="section-icon rest">🌐</div>
+        <div>
+          <h2>REST API</h2>
+          <p>HTTP endpoints at <code>/api/*</code> — all require Bearer JWT unless noted</p>
+        </div>
+      </div>
+
+      <!-- Expenses -->
+      <div class="endpoint-group">
+        <div class="endpoint-group-title">Expenses</div>
+
+        <!-- POST /api/expenses -->
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method POST">POST</span>
+            <span class="endpoint-path">/api/expenses</span>
+            <span class="endpoint-desc">Submit new expense</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div style="margin-bottom:12px">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:700;margin-bottom:6px">Auth</div>
+              <span class="scope-badge">expense:submit</span>
+              <span class="role-badge employee">employee+</span>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-section">
+                <h4>Request Body</h4>
+                <div class="param-row"><span class="param-name">categoryId</span><span class="param-type">string</span><span class="param-required">required</span></div>
+                <div class="param-row"><span class="param-name">amount</span><span class="param-type">number</span><span class="param-required">required</span><span class="param-desc">&nbsp;Positive, in currency units</span></div>
+                <div class="param-row"><span class="param-name">currency</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;ISO 4217 (e.g. "USD")</span></div>
+                <div class="param-row"><span class="param-name">description</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;10–500 chars</span></div>
+                <div class="param-row"><span class="param-name">expenseDate</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;YYYY-MM-DD</span></div>
+                <div class="param-row"><span class="param-name">receiptUrl</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;Valid URL</span></div>
+              </div>
+              <div class="detail-section">
+                <h4>Response 201</h4>
+                <pre>{
+  <span class="key">"id"</span>: <span class="string">"uuid"</span>,
+  <span class="key">"status"</span>: <span class="string">"pending"</span>,
+  <span class="key">"amount"</span>: <span class="number">49.99</span>,
+  <span class="key">"currency"</span>: <span class="string">"USD"</span>,
+  <span class="key">"description"</span>: <span class="string">"Team lunch"</span>,
+  <span class="key">"expenseDate"</span>: <span class="string">"2026-06-12"</span>,
+  <span class="key">"submittedAt"</span>: <span class="string">"2026-06-12T..."</span>
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GET /api/expenses/me -->
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method GET">GET</span>
+            <span class="endpoint-path">/api/expenses/me</span>
+            <span class="endpoint-desc">List own expenses</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div style="margin-bottom:12px">
+              <span class="scope-badge">expense:view:own</span>
+              <span class="role-badge employee">employee+</span>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-section">
+                <h4>Query Params</h4>
+                <div class="param-row"><span class="param-name">status</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;pending|approved|rejected|paid</span></div>
+                <div class="param-row"><span class="param-name">fromDate</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;YYYY-MM-DD</span></div>
+                <div class="param-row"><span class="param-name">toDate</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;YYYY-MM-DD</span></div>
+                <div class="param-row"><span class="param-name">categoryId</span><span class="param-type">string</span><span class="param-optional">optional</span></div>
+                <div class="param-row"><span class="param-name">page</span><span class="param-type">number</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;Default 1</span></div>
+                <div class="param-row"><span class="param-name">limit</span><span class="param-type">number</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;Default 20</span></div>
+              </div>
+              <div class="detail-section">
+                <h4>Response 200</h4>
+                <pre>{
+  <span class="key">"expenses"</span>: [...],
+  <span class="key">"pagination"</span>: {
+    <span class="key">"page"</span>: <span class="number">1</span>,
+    <span class="key">"limit"</span>: <span class="number">20</span>,
+    <span class="key">"total"</span>: <span class="number">42</span>
+  },
+  <span class="key">"summary"</span>: {
+    <span class="key">"totalAmount"</span>: <span class="number">1234.56</span>
+  }
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GET /api/expenses/team/:teamId -->
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method GET">GET</span>
+            <span class="endpoint-path">/api/expenses/team/<span class="param">:teamId</span></span>
+            <span class="endpoint-desc">List team expenses</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div style="margin-bottom:12px">
+              <span class="scope-badge">expense:view:team</span>
+              <span class="role-badge manager">manager+</span>
+            </div>
+            <div class="detail-section">
+              <h4>Path Params</h4>
+              <div class="param-row"><span class="param-name">teamId</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;Team identifier</span></div>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:8px">Same query params as <code>GET /api/expenses/me</code>. Response includes submitter info per expense.</p>
+          </div>
+        </div>
+
+        <!-- GET /api/expenses/all -->
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method GET">GET</span>
+            <span class="endpoint-path">/api/expenses/all</span>
+            <span class="endpoint-desc">List all expenses — admin only</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div style="margin-bottom:12px">
+              <span class="scope-badge">expense:view:all</span>
+              <span class="role-badge finance">finance_admin</span>
+            </div>
+            <div class="detail-section">
+              <h4>Additional Query Params</h4>
+              <div class="param-row"><span class="param-name">department</span><span class="param-type">string</span><span class="param-optional">optional</span></div>
+              <div class="param-row"><span class="param-name">submitterId</span><span class="param-type">string</span><span class="param-optional">optional</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GET /api/expenses/:id -->
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method GET">GET</span>
+            <span class="endpoint-path">/api/expenses/<span class="param">:expenseId</span></span>
+            <span class="endpoint-desc">Get single expense detail</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div style="margin-bottom:12px">
+              <span class="scope-badge">expense:view:own</span>
+              <span style="color:var(--text-dim);font-size:12px;margin-right:4px">OR</span>
+              <span class="scope-badge">expense:view:team</span>
+              <span style="color:var(--text-dim);font-size:12px;margin-right:4px">OR</span>
+              <span class="scope-badge">expense:view:all</span>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted)">
+              Access is further restricted by ownership: employees can only fetch their own expense,
+              managers can fetch team members', finance_admin can fetch any.
+            </p>
+          </div>
+        </div>
+
+        <!-- POST /api/expenses/:id/approve -->
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method POST">POST</span>
+            <span class="endpoint-path">/api/expenses/<span class="param">:expenseId</span>/approve</span>
+            <span class="endpoint-desc">Approve pending expense</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div style="margin-bottom:12px">
+              <span class="scope-badge">expense:approve</span>
+              <span class="role-badge manager">manager+</span>
+            </div>
+            <div class="detail-section">
+              <h4>Request Body</h4>
+              <div class="param-row"><span class="param-name">notes</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;Max 500 chars</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- POST /api/expenses/:id/reject -->
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method POST">POST</span>
+            <span class="endpoint-path">/api/expenses/<span class="param">:expenseId</span>/reject</span>
+            <span class="endpoint-desc">Reject pending expense</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div style="margin-bottom:12px">
+              <span class="scope-badge">expense:approve</span>
+              <span class="role-badge manager">manager+</span>
+            </div>
+            <div class="detail-section">
+              <h4>Request Body</h4>
+              <div class="param-row"><span class="param-name">reason</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;10–500 chars</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div class="endpoint-group" id="ep-categories">
+        <div class="endpoint-group-title">Categories</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method GET">GET</span>
+            <span class="endpoint-path">/api/categories</span>
+            <span class="endpoint-desc">List all expense categories — no scope required</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">No scope required — any authenticated user.</p>
+            <div class="detail-section">
+              <h4>Seed categories</h4>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                <code>Meals</code>
+                <code>Travel</code>
+                <code>Office Supplies</code>
+                <code>Software</code>
+                <code>Training</code>
+              </div>
+              <p style="font-size:12px;color:var(--text-dim);margin-top:8px">Each category has a configured spending limit.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reports -->
+      <div class="endpoint-group" id="ep-reports">
+        <div class="endpoint-group-title">Reports</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method POST">POST</span>
+            <span class="endpoint-path">/api/expenses/reports/generate</span>
+            <span class="endpoint-desc">Generate expense report</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div style="margin-bottom:12px">
+              <span class="role-badge finance">finance_admin</span>
+              <span style="font-size:12px;color:var(--text-dim)">Role-gated only (no scope required)</span>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-section">
+                <h4>Request Body</h4>
+                <div class="param-row"><span class="param-name">reportType</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;summary|detailed|by_category</span></div>
+                <div class="param-row"><span class="param-name">fromDate</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;YYYY-MM-DD</span></div>
+                <div class="param-row"><span class="param-name">toDate</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;YYYY-MM-DD</span></div>
+                <div class="param-row"><span class="param-name">department</span><span class="param-type">string</span><span class="param-optional">optional</span></div>
+                <div class="param-row"><span class="param-name">status</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;pending|approved|rejected|paid</span></div>
+                <div class="param-row"><span class="param-name">format</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;json|csv</span></div>
+              </div>
+              <div class="detail-section">
+                <h4>Report Types</h4>
+                <div style="font-size:12px;color:var(--text-muted)">
+                  <p style="margin-bottom:6px"><code>summary</code> — total amounts by status</p>
+                  <p style="margin-bottom:6px"><code>detailed</code> — full expense rows with submitter info</p>
+                  <p><code>by_category</code> — breakdown per expense category</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users -->
+      <div class="endpoint-group" id="ep-users">
+        <div class="endpoint-group-title">Users</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method POST">POST</span>
+            <span class="endpoint-path">/api/users/register</span>
+            <span class="endpoint-desc">Register new user — finance_admin only</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div style="margin-bottom:12px">
+              <span class="role-badge finance">finance_admin</span>
+            </div>
+            <div class="detail-section">
+              <h4>Request Body</h4>
+              <div class="param-row"><span class="param-name">email</span><span class="param-type">string</span><span class="param-required">required</span></div>
+              <div class="param-row"><span class="param-name">fullName</span><span class="param-type">string</span><span class="param-required">required</span></div>
+              <div class="param-row"><span class="param-name">lrUserId</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;LoginRadius user ID</span></div>
+              <div class="param-row"><span class="param-name">department</span><span class="param-type">string</span><span class="param-optional">optional</span></div>
+              <div class="param-row"><span class="param-name">managerId</span><span class="param-type">string</span><span class="param-optional">optional</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Health -->
+      <div class="endpoint-group" id="ep-health">
+        <div class="endpoint-group-title">Health & Meta</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method GET">GET</span>
+            <span class="endpoint-path">/api/health</span>
+            <span class="endpoint-desc">Health check — no auth</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <pre>{ <span class="key">"status"</span>: <span class="string">"ok"</span>, <span class="key">"timestamp"</span>: <span class="string">"..."</span> }</pre>
+          </div>
+        </div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="method GET">GET</span>
+            <span class="endpoint-path">/.well-known/oauth-protected-resource</span>
+            <span class="endpoint-desc">OAuth resource metadata — no auth</span>
+            <span class="endpoint-expand">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <p style="font-size:12px;color:var(--text-muted)">RFC 9728 resource metadata. Used by OAuth clients to discover scopes and authorization server info.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MCP Tools -->
+    <div class="section" id="mcp-whoami">
+      <div class="section-header">
+        <div class="section-icon mcp">🤖</div>
+        <div>
+          <h2>MCP Tools</h2>
+          <p>Model Context Protocol — AI agents call these via JSON-RPC 2.0 at <code>/mcp</code></p>
+        </div>
+      </div>
+
+      <div class="callout success">
+        <div class="callout-icon">🤖</div>
+        <div>
+          MCP tools mirror REST capabilities but with AI-friendly schemas. Same auth rules apply —
+          the JWT bearer token is passed in the MCP session. Tools validate inputs via Zod before
+          executing business logic.
+        </div>
+      </div>
+
+      <!-- who_am_i -->
+      <div class="mcp-card" id="mcp-whoami">
+        <div class="mcp-header" onclick="toggleMcp(this)">
+          <span class="mcp-tag">TOOL</span>
+          <span class="mcp-name">who_am_i</span>
+          <span class="endpoint-desc">Get authenticated user profile</span>
+          <span class="endpoint-expand">▼</span>
+        </div>
+        <div class="mcp-body">
+          <div style="margin-bottom:12px">
+            <span style="font-size:12px;color:var(--green)">✓ No scope required — any authenticated user</span>
+          </div>
+          <div class="detail-grid">
+            <div class="detail-section">
+              <h4>Input</h4>
+              <p style="font-size:12px;color:var(--text-dim)">No parameters.</p>
+            </div>
+            <div class="detail-section">
+              <h4>Returns</h4>
+              <pre>{
+  <span class="key">"id"</span>: <span class="string">"uuid"</span>,
+  <span class="key">"email"</span>: <span class="string">"alice@company.com"</span>,
+  <span class="key">"fullName"</span>: <span class="string">"Alice"</span>,
+  <span class="key">"department"</span>: <span class="string">"Engineering"</span>,
+  <span class="key">"manager"</span>: { <span class="key">"id"</span>: <span class="string">"..."</span>, <span class="key">"fullName"</span>: <span class="string">"Bob"</span> }
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- submit_expense -->
+      <div class="mcp-card" id="mcp-submit">
+        <div class="mcp-header" onclick="toggleMcp(this)">
+          <span class="mcp-tag">TOOL</span>
+          <span class="mcp-name">submit_expense</span>
+          <span class="endpoint-desc">Submit a new expense for approval</span>
+          <span class="endpoint-expand">▼</span>
+        </div>
+        <div class="mcp-body">
+          <div style="margin-bottom:12px">
+            <span class="scope-badge">expense:submit</span>
+          </div>
+          <div class="detail-grid">
+            <div class="detail-section">
+              <h4>Parameters</h4>
+              <div class="param-row"><span class="param-name">category</span><span class="param-type">enum</span><span class="param-required">required</span></div>
+              <div style="font-size:11px;color:var(--text-dim);margin-left:130px;margin-top:-4px;margin-bottom:6px">Meals | Travel | Office Supplies | Software | Training</div>
+              <div class="param-row"><span class="param-name">amount</span><span class="param-type">number</span><span class="param-required">required</span><span class="param-desc">&nbsp;Positive, USD</span></div>
+              <div class="param-row"><span class="param-name">currency</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;ISO 4217, 3 chars</span></div>
+              <div class="param-row"><span class="param-name">description</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;10–500 chars</span></div>
+              <div class="param-row"><span class="param-name">expense_date</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;YYYY-MM-DD</span></div>
+              <div class="param-row"><span class="param-name">receipt_url</span><span class="param-type">url</span><span class="param-optional">optional</span></div>
+            </div>
+            <div class="detail-section">
+              <h4>Example Call</h4>
+              <pre>{
+  <span class="key">"category"</span>: <span class="string">"Meals"</span>,
+  <span class="key">"amount"</span>: <span class="number">45.50</span>,
+  <span class="key">"currency"</span>: <span class="string">"USD"</span>,
+  <span class="key">"description"</span>: <span class="string">"Client lunch"</span>,
+  <span class="key">"expense_date"</span>: <span class="string">"2026-06-12"</span>
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- list_my_expenses -->
+      <div class="mcp-card" id="mcp-listmine">
+        <div class="mcp-header" onclick="toggleMcp(this)">
+          <span class="mcp-tag">TOOL</span>
+          <span class="mcp-name">list_my_expenses</span>
+          <span class="endpoint-desc">View own submitted expenses with filters</span>
+          <span class="endpoint-expand">▼</span>
+        </div>
+        <div class="mcp-body">
+          <div style="margin-bottom:12px">
+            <span class="scope-badge">expense:view:own</span>
+          </div>
+          <div class="detail-grid">
+            <div class="detail-section">
+              <h4>Parameters</h4>
+              <div class="param-row"><span class="param-name">status</span><span class="param-type">array</span><span class="param-optional">optional</span></div>
+              <div style="font-size:11px;color:var(--text-dim);margin-left:130px;margin-top:-4px;margin-bottom:6px">["pending","approved","rejected","paid"]</div>
+              <div class="param-row"><span class="param-name">from_date</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;YYYY-MM-DD</span></div>
+              <div class="param-row"><span class="param-name">to_date</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;YYYY-MM-DD</span></div>
+              <div class="param-row"><span class="param-name">page</span><span class="param-type">number</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;Default 1</span></div>
+              <div class="param-row"><span class="param-name">limit</span><span class="param-type">number</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;1–100, default 20</span></div>
+            </div>
+            <div class="detail-section">
+              <h4>Returns</h4>
+              <pre>{
+  <span class="key">"expenses"</span>: [...],
+  <span class="key">"pagination"</span>: {
+    <span class="key">"page"</span>: <span class="number">1</span>,
+    <span class="key">"total"</span>: <span class="number">15</span>
+  },
+  <span class="key">"summary"</span>: {
+    <span class="key">"totalAmount"</span>: <span class="number">560.00</span>
+  }
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- list_team_expenses -->
+      <div class="mcp-card" id="mcp-listteam">
+        <div class="mcp-header" onclick="toggleMcp(this)">
+          <span class="mcp-tag">TOOL</span>
+          <span class="mcp-name">list_team_expenses</span>
+          <span class="endpoint-desc">View team members' expenses — managers only</span>
+          <span class="endpoint-expand">▼</span>
+        </div>
+        <div class="mcp-body">
+          <div style="margin-bottom:12px">
+            <span class="scope-badge">expense:view:team</span>
+            <span class="role-badge manager">manager+</span>
+          </div>
+          <div class="detail-section">
+            <h4>Parameters</h4>
+            <div class="param-row"><span class="param-name">team_id</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;Defaults to caller's managed team</span></div>
+            <div class="param-row"><span class="param-name">submitter_id</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;Filter by specific team member</span></div>
+            <div class="param-row"><span class="param-name">status</span><span class="param-type">array</span><span class="param-optional">optional</span></div>
+            <div class="param-row"><span class="param-name">from_date</span><span class="param-type">string</span><span class="param-optional">optional</span></div>
+            <div class="param-row"><span class="param-name">to_date</span><span class="param-type">string</span><span class="param-optional">optional</span></div>
+            <div class="param-row"><span class="param-name">page</span><span class="param-type">number</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;Default 1</span></div>
+            <div class="param-row"><span class="param-name">limit</span><span class="param-type">number</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;1–100, default 20</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- approve_expense -->
+      <div class="mcp-card" id="mcp-approve">
+        <div class="mcp-header" onclick="toggleMcp(this)">
+          <span class="mcp-tag">TOOL</span>
+          <span class="mcp-name">approve_expense</span>
+          <span class="endpoint-desc">Approve a pending expense</span>
+          <span class="endpoint-expand">▼</span>
+        </div>
+        <div class="mcp-body">
+          <div style="margin-bottom:12px">
+            <span class="scope-badge">expense:approve</span>
+            <span class="role-badge manager">manager+</span>
+          </div>
+          <div class="detail-section">
+            <h4>Parameters</h4>
+            <div class="param-row"><span class="param-name">expense_id</span><span class="param-type">uuid</span><span class="param-required">required</span><span class="param-desc">&nbsp;Must be pending</span></div>
+            <div class="param-row"><span class="param-name">notes</span><span class="param-type">string</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;Max 500 chars</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- reject_expense -->
+      <div class="mcp-card" id="mcp-reject">
+        <div class="mcp-header" onclick="toggleMcp(this)">
+          <span class="mcp-tag">TOOL</span>
+          <span class="mcp-name">reject_expense</span>
+          <span class="endpoint-desc">Reject a pending expense</span>
+          <span class="endpoint-expand">▼</span>
+        </div>
+        <div class="mcp-body">
+          <div style="margin-bottom:12px">
+            <span class="scope-badge">expense:approve</span>
+            <span class="role-badge manager">manager+</span>
+          </div>
+          <div class="detail-section">
+            <h4>Parameters</h4>
+            <div class="param-row"><span class="param-name">expense_id</span><span class="param-type">uuid</span><span class="param-required">required</span><span class="param-desc">&nbsp;Must be pending</span></div>
+            <div class="param-row"><span class="param-name">reason</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;10–500 chars — mandatory for audit</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- generate_report -->
+      <div class="mcp-card" id="mcp-report">
+        <div class="mcp-header" onclick="toggleMcp(this)">
+          <span class="mcp-tag">TOOL</span>
+          <span class="mcp-name">generate_report</span>
+          <span class="endpoint-desc">Generate expense analytics report — finance only</span>
+          <span class="endpoint-expand">▼</span>
+        </div>
+        <div class="mcp-body">
+          <div style="margin-bottom:12px">
+            <span class="scope-badge">expense:report:generate</span>
+            <span class="role-badge finance">finance_admin</span>
+          </div>
+          <div class="detail-grid">
+            <div class="detail-section">
+              <h4>Parameters</h4>
+              <div class="param-row"><span class="param-name">from_date</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;YYYY-MM-DD</span></div>
+              <div class="param-row"><span class="param-name">to_date</span><span class="param-type">string</span><span class="param-required">required</span><span class="param-desc">&nbsp;YYYY-MM-DD</span></div>
+              <div class="param-row"><span class="param-name">report_type</span><span class="param-type">enum</span><span class="param-optional">optional</span></div>
+              <div style="font-size:11px;color:var(--text-dim);margin-left:130px;margin-top:-4px;margin-bottom:6px">summary | detailed | by_category</div>
+              <div class="param-row"><span class="param-name">department</span><span class="param-type">string</span><span class="param-optional">optional</span></div>
+              <div class="param-row"><span class="param-name">status</span><span class="param-type">enum</span><span class="param-optional">optional</span><span class="param-desc">&nbsp;pending|approved|rejected|paid</span></div>
+            </div>
+            <div class="detail-section">
+              <h4>Example Call</h4>
+              <pre>{
+  <span class="key">"report_type"</span>: <span class="string">"by_category"</span>,
+  <span class="key">"from_date"</span>: <span class="string">"2026-01-01"</span>,
+  <span class="key">"to_date"</span>: <span class="string">"2026-06-30"</span>,
+  <span class="key">"status"</span>: <span class="string">"approved"</span>
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>Expense Server · Built on Express 5 + SQLite + LoginRadius</span>
+      <span>Auth: <code>LR_ISSUER</code> · Port: <code>3000</code></span>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function toggle(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('.endpoint-expand');
+    body.classList.toggle('open');
+    icon.textContent = body.classList.contains('open') ? '▲' : '▼';
+  }
+
+  function toggleMcp(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('.endpoint-expand');
+    body.classList.toggle('open');
+    icon.textContent = body.classList.contains('open') ? '▲' : '▼';
+  }
+
+  // Open cards when navigating via anchor
+  document.querySelectorAll('nav a').forEach(link => {
+    link.addEventListener('click', () => {
+      const id = link.getAttribute('href').slice(1);
+      const target = document.getElementById(id);
+      if (target) {
+        const header = target.querySelector('.endpoint-header, .mcp-header');
+        const body = target.querySelector('.endpoint-body, .mcp-body');
+        if (body && !body.classList.contains('open')) {
+          body.classList.add('open');
+          if (header) {
+            const icon = header.querySelector('.endpoint-expand');
+            if (icon) icon.textContent = '▲';
+          }
+        }
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

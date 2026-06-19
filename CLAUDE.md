@@ -2,18 +2,18 @@
 
 ## Project Overview
 
-Expense management system with dual REST API and MCP (Model Context Protocol) interfaces. Built as a Turborepo monorepo using TypeScript, Express 5, SQLite, and Scalekit for authentication.
+Expense management system with dual REST API and MCP (Model Context Protocol) interfaces. Built as a Turborepo monorepo using TypeScript, Express 5, SQLite, and LoginRadius for authentication.
 
 ## Repository Structure
 
 ```
 apps/expenses-server/src/   # Main backend server
   api/                      # REST routes, controllers, validators
-  mcp/                      # MCP tool definitions (6 tools)
+  mcp/                      # MCP tool definitions (7 tools)
   db/                       # SQLite schema, seed, repositories
   services/                 # Business logic layer
-  middleware/               # Auth (Scalekit JWT), RBAC, audit, error handling
-  config/                   # Env validation (Zod), constants, Scalekit client
+  middleware/               # Auth (LoginRadius JWT), RBAC, audit, error handling
+  config/                   # Env validation (Zod), constants, LoginRadius client
   types/                    # TypeScript interfaces
   utils/                    # Error classes, response helpers, UUID
 packages/
@@ -33,7 +33,7 @@ pnpm run check-types   # Type check all packages
 pnpm run format        # Prettier format
 
 # Server level (apps/expenses-server)
-pnpm run dev           # Dev server with tsx watch (port 3000)
+pnpm run dev           # Dev server with tsx watch (port 3001)
 pnpm run build         # Compile TS to dist/
 pnpm run db:seed       # Seed database with test data
 pnpm run db:reset      # Drop tables and reseed
@@ -46,7 +46,7 @@ Package manager is **pnpm**. Use `pnpm` instead of `npm`.
 
 Layered architecture: Routes/MCP Tools → Controllers → Services → Repositories → SQLite
 
-- **Auth**: Scalekit JWT validation via middleware; OAuth 2.1 scopes for MCP
+- **Auth**: LoginRadius JWT validation via middleware (OIDC/JWKS); OAuth 2.1 scopes for MCP
 - **RBAC**: 3 roles (employee, manager, finance_admin) with scope-based authorization
 - **Database**: better-sqlite3 with WAL mode, direct SQL (no ORM), repository pattern
 - **Validation**: Zod schemas for all inputs
@@ -86,7 +86,7 @@ Six scopes defined in `src/config/constants.ts` (`McpScopes`), enforced via `req
 | `expense:view:team`       | View direct reports' expenses | `GET /api/expenses/team/:teamId`, `list_team_expenses` MCP tool                                                   |
 | `expense:view:all`        | View all expenses system-wide | `GET /api/expenses/all` (finance_admin only)                                                                      |
 | `expense:approve`         | Approve or reject expenses    | `POST /api/expenses/:id/approve`, `POST /api/expenses/:id/reject`, `approve_expense` / `reject_expense` MCP tools |
-| `expense:report:generate` | Generate expense reports      | `POST /api/reports/generate`, `generate_expense_report` MCP tool                                                  |
+| `expense:report:generate` | Generate expense reports      | `POST /api/expenses/reports/generate`, `generate_report` MCP tool                                                  |
 
 ### Endpoint → Permission Matrix
 
@@ -99,22 +99,23 @@ Six scopes defined in `src/config/constants.ts` (`McpScopes`), enforced via `req
 | `GET /api/expenses/:id`          | any authenticated | any of `expense:view:own`, `expense:view:team`, `expense:view:all` |
 | `POST /api/expenses/:id/approve` | any authenticated | `expense:approve`                                                  |
 | `POST /api/expenses/:id/reject`  | any authenticated | `expense:approve`                                                  |
-| `POST /api/reports/generate`     | finance_admin     | — (role-gated only)                                                |
+| `POST /api/expenses/reports/generate` | finance_admin | `expense:report:generate`                                          |
 | `GET /api/categories`            | any authenticated | — (no scope required)                                              |
 
 ### Auth Flow
 
 1. Client sends `Authorization: Bearer <JWT>` header
-2. `authMiddleware` validates JWT via Scalekit SDK (`scalekitClient.validateAccessToken`)
-3. Roles extracted from Scalekit token claims and mapped via `mapScalekitRoles()` (handles variants like `finance-admin`, `financeadmin`)
-4. Scopes extracted from the `scope` claim in the token
-5. `requireRoles()` / `requireScopes()` middlewares gate individual routes
-6. `auditMiddleware` logs all mutations to the `audit_log` table
+2. `authMiddleware` validates JWT via OIDC/JWKS from `LR_ISSUER` (LoginRadius)
+3. User looked up in local DB by `sub` claim (LoginRadius user ID) or `email` fallback
+4. Roles derived from scopes via `deriveRolesFromScopes()`
+5. Scopes extracted from `scp` or `scope` claim in the token
+6. `requireRoles()` / `requireScopes()` middlewares gate individual routes
+7. `auditMiddleware` logs all mutations to the `audit_log` table
 
 ## Environment Variables
 
-Required: `SCALEKIT_ENV_URL`, `SCALEKIT_CLIENT_ID`, `SCALEKIT_CLIENT_SECRET`, `MCP_SERVER_URL`, `PROTECTED_RESOURCE_METADATA`
-Optional: `PORT` (default 3000), `DATABASE_PATH` (default `./data/expense.db`), `CORS_ORIGIN`, `NODE_ENV`
+Required: `LR_ISSUER`, `LR_INTROSPECT_URL`, `LR_JWKS_URI`, `LR_CLIENT_ID`, `LR_CLIENT_SECRET`, `MCP_RESOURCE_URL`, `PROTECTED_RESOURCE_METADATA`
+Optional: `LR_TOKEN_ENDPOINT_AUTH_METHOD` (default `client_secret_post`), `PORT` (default 3001), `SERVER_URL` (default `http://localhost:3001`), `DATABASE_PATH` (default `./data/expense.db`), `CORS_ORIGIN`, `NODE_ENV`
 
 ## Test Data (after db:seed)
 

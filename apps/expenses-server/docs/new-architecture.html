@@ -1,0 +1,3567 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Server — Token Exchange Architecture</title>
+    <style>
+      :root {
+        --bg: #0b0d14;
+        --surface: #13151f;
+        --surface-2: #1b1e2d;
+        --surface-3: #22263a;
+        --border: #272b3d;
+        --border-bright: #353a55;
+
+        --blue: #6c8fff;
+        --blue-dim: #131d3a;
+        --blue-mid: #1e2a4a;
+
+        --purple: #a78bfa;
+        --purple-dim: #1a1130;
+        --purple-mid: #261945;
+
+        --green: #34d399;
+        --green-dim: #0c2218;
+
+        --yellow: #fbbf24;
+        --yellow-dim: #271d07;
+
+        --orange: #fb923c;
+        --orange-dim: #251508;
+
+        --red: #f87171;
+        --red-dim: #260d0d;
+
+        --teal: #2dd4bf;
+        --teal-dim: #0c1e1c;
+
+        --pink: #f472b6;
+        --pink-dim: #280d1e;
+
+        --text: #dde3f0;
+        --text-muted: #8591a8;
+        --text-dim: #50597a;
+
+        --mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+        --sans: "Inter", system-ui, -apple-system, sans-serif;
+        --radius: 8px;
+        --radius-lg: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      /* ─── Layout ─── */
+      .layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      nav {
+        width: 270px;
+        min-width: 270px;
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        padding-bottom: 32px;
+      }
+
+      .nav-logo {
+        padding: 22px 20px 18px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 8px;
+      }
+
+      .nav-logo h1 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -0.2px;
+      }
+
+      .nav-logo p {
+        font-size: 11px;
+        color: var(--text-dim);
+        margin-top: 3px;
+        font-family: var(--mono);
+      }
+
+      .nav-section {
+        padding: 12px 20px 4px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+      }
+
+      nav a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 20px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 13px;
+        border-left: 2px solid transparent;
+        transition: all 0.12s;
+      }
+
+      nav a:hover,
+      nav a.active {
+        color: var(--text);
+        background: var(--surface-2);
+        border-left-color: var(--blue);
+      }
+
+      nav a .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      main {
+        flex: 1;
+        max-width: 980px;
+        padding: 48px 52px 80px;
+      }
+
+      /* ─── Hero ─── */
+      .hero {
+        margin-bottom: 56px;
+        padding-bottom: 40px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--teal);
+        background: var(--teal-dim);
+        border: 1px solid var(--teal);
+        padding: 4px 12px;
+        border-radius: 20px;
+        letter-spacing: 0.4px;
+        margin-bottom: 20px;
+      }
+
+      .hero h1 {
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -1.2px;
+        color: var(--text);
+        line-height: 1.15;
+        margin-bottom: 14px;
+      }
+
+      .hero h1 span {
+        color: var(--teal);
+      }
+
+      .hero p {
+        font-size: 15px;
+        color: var(--text-muted);
+        max-width: 620px;
+        line-height: 1.75;
+      }
+
+      .hero-chips {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+        flex-wrap: wrap;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-family: var(--mono);
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1px solid;
+        font-weight: 500;
+      }
+
+      .chip.blue {
+        background: var(--blue-dim);
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+      .chip.purple {
+        background: var(--purple-dim);
+        border-color: var(--purple);
+        color: var(--purple);
+      }
+      .chip.teal {
+        background: var(--teal-dim);
+        border-color: var(--teal);
+        color: var(--teal);
+      }
+      .chip.green {
+        background: var(--green-dim);
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .chip.yellow {
+        background: var(--yellow-dim);
+        border-color: var(--yellow);
+        color: var(--yellow);
+      }
+
+      /* ─── Sections ─── */
+      .section {
+        margin-bottom: 64px;
+        scroll-margin-top: 24px;
+      }
+
+      .section-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin-bottom: 8px;
+      }
+
+      .section h2 {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        color: var(--text);
+        margin-bottom: 6px;
+      }
+
+      .section-sub {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 28px;
+        max-width: 640px;
+        line-height: 1.7;
+      }
+
+      /* ─── Callouts ─── */
+      .callout {
+        display: flex;
+        gap: 14px;
+        padding: 16px 18px;
+        border-radius: var(--radius);
+        margin-bottom: 24px;
+        font-size: 13px;
+        border: 1px solid;
+        line-height: 1.65;
+      }
+
+      .callout.info {
+        background: var(--blue-dim);
+        border-color: var(--blue);
+        color: var(--text);
+      }
+      .callout.warn {
+        background: var(--yellow-dim);
+        border-color: var(--yellow);
+        color: var(--text);
+      }
+      .callout.success {
+        background: var(--green-dim);
+        border-color: var(--green);
+        color: var(--text);
+      }
+      .callout.purple {
+        background: var(--purple-dim);
+        border-color: var(--purple);
+        color: var(--text);
+      }
+      .callout.teal {
+        background: var(--teal-dim);
+        border-color: var(--teal);
+        color: var(--text);
+      }
+
+      .callout-icon {
+        font-size: 16px;
+        flex-shrink: 0;
+        line-height: 1.5;
+      }
+      .callout strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      /* ─── Diagrams ─── */
+      .diagram {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 28px 24px;
+        margin-bottom: 28px;
+        overflow-x: auto;
+      }
+
+      .diagram-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      /* Flow diagram - old arch */
+      .flow-grid {
+        display: grid;
+        gap: 0;
+      }
+
+      .flow-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 4px 0;
+        flex-wrap: wrap;
+      }
+
+      .flow-row.label-row {
+        margin-bottom: 4px;
+      }
+
+      .flow-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        width: 100%;
+        text-align: center;
+        margin: 10px 0 6px;
+      }
+
+      .fbox {
+        background: var(--surface-2);
+        border: 1px solid var(--border-bright);
+        border-radius: 6px;
+        padding: 7px 16px;
+        font-size: 12px;
+        font-family: var(--mono);
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      .fbox.blue {
+        border-color: var(--blue);
+        color: var(--blue);
+        background: var(--blue-dim);
+      }
+      .fbox.purple {
+        border-color: var(--purple);
+        color: var(--purple);
+        background: var(--purple-dim);
+      }
+      .fbox.green {
+        border-color: var(--green);
+        color: var(--green);
+        background: var(--green-dim);
+      }
+      .fbox.yellow {
+        border-color: var(--yellow);
+        color: var(--yellow);
+        background: var(--yellow-dim);
+      }
+      .fbox.teal {
+        border-color: var(--teal);
+        color: var(--teal);
+        background: var(--teal-dim);
+      }
+      .fbox.orange {
+        border-color: var(--orange);
+        color: var(--orange);
+        background: var(--orange-dim);
+      }
+      .fbox.pink {
+        border-color: var(--pink);
+        color: var(--pink);
+        background: var(--pink-dim);
+      }
+
+      .farrow {
+        color: var(--text-dim);
+        font-size: 16px;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      .farrow.down {
+        display: block;
+        text-align: center;
+        margin: 2px 0;
+        font-size: 18px;
+      }
+
+      /* Token exchange flow - new arch */
+      .flow-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 4px;
+        position: relative;
+      }
+
+      .flow-step-connector {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
+      .step-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        font-family: var(--mono);
+        flex-shrink: 0;
+      }
+
+      .step-num.blue {
+        background: var(--blue-dim);
+        color: var(--blue);
+        border: 1px solid var(--blue);
+      }
+      .step-num.teal {
+        background: var(--teal-dim);
+        color: var(--teal);
+        border: 1px solid var(--teal);
+      }
+      .step-num.purple {
+        background: var(--purple-dim);
+        color: var(--purple);
+        border: 1px solid var(--purple);
+      }
+      .step-num.green {
+        background: var(--green-dim);
+        color: var(--green);
+        border: 1px solid var(--green);
+      }
+      .step-num.yellow {
+        background: var(--yellow-dim);
+        color: var(--yellow);
+        border: 1px solid var(--yellow);
+      }
+      .step-num.orange {
+        background: var(--orange-dim);
+        color: var(--orange);
+        border: 1px solid var(--orange);
+      }
+
+      .step-line {
+        width: 1px;
+        flex: 1;
+        min-height: 20px;
+        background: var(--border-bright);
+        margin: 4px 0;
+      }
+
+      .step-content {
+        flex: 1;
+        padding: 2px 0 20px;
+      }
+
+      .step-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+
+      .step-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.6;
+      }
+
+      .step-token {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 8px;
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      .token-part {
+        padding: 3px 9px;
+        border-radius: 5px;
+        border: 1px solid;
+      }
+
+      .token-part.aud {
+        background: var(--blue-dim);
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+      .token-part.scp {
+        background: var(--purple-dim);
+        border-color: var(--purple);
+        color: var(--purple);
+      }
+      .token-part.sub {
+        background: var(--green-dim);
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .token-part.act {
+        background: var(--teal-dim);
+        border-color: var(--teal);
+        color: var(--teal);
+      }
+
+      /* ─── Code blocks ─── */
+      pre {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.7;
+        color: var(--text);
+        margin-top: 10px;
+      }
+
+      .str {
+        color: var(--green);
+      }
+      .key {
+        color: var(--blue);
+      }
+      .num {
+        color: var(--orange);
+      }
+      .cmt {
+        color: var(--text-dim);
+        font-style: italic;
+      }
+      .kw {
+        color: var(--purple);
+      }
+      .hl {
+        color: var(--teal);
+      }
+
+      /* ─── Tables ─── */
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .data-table th {
+        text-align: left;
+        padding: 9px 14px;
+        background: var(--surface-2);
+        color: var(--text-dim);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.9px;
+        font-weight: 700;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .data-table td {
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-muted);
+        vertical-align: top;
+      }
+
+      .data-table tr:last-child td {
+        border-bottom: none;
+      }
+      .data-table tr:hover td {
+        background: var(--surface-2);
+      }
+
+      /* ─── Badges ─── */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        border: 1px solid;
+        white-space: nowrap;
+        margin-right: 4px;
+        margin-bottom: 2px;
+      }
+
+      .badge.blue {
+        background: var(--blue-dim);
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+      .badge.purple {
+        background: var(--purple-dim);
+        border-color: var(--purple);
+        color: var(--purple);
+      }
+      .badge.green {
+        background: var(--green-dim);
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .badge.yellow {
+        background: var(--yellow-dim);
+        border-color: var(--yellow);
+        color: var(--yellow);
+      }
+      .badge.teal {
+        background: var(--teal-dim);
+        border-color: var(--teal);
+        color: var(--teal);
+      }
+      .badge.orange {
+        background: var(--orange-dim);
+        border-color: var(--orange);
+        color: var(--orange);
+      }
+      .badge.red {
+        background: var(--red-dim);
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .badge.grey {
+        background: var(--surface-3);
+        border-color: var(--border-bright);
+        color: var(--text-muted);
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        background: var(--surface-3);
+        padding: 1px 6px;
+        border-radius: 4px;
+        color: var(--orange);
+      }
+
+      /* ─── Change cards ─── */
+      .change-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .change-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+
+      .change-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 16px;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .change-kind {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 4px;
+        flex-shrink: 0;
+      }
+
+      .change-kind.new {
+        background: var(--green-dim);
+        color: var(--green);
+        border: 1px solid var(--green);
+      }
+      .change-kind.modify {
+        background: var(--blue-dim);
+        color: var(--blue);
+        border: 1px solid var(--blue);
+      }
+      .change-kind.remove {
+        background: var(--red-dim);
+        color: var(--red);
+        border: 1px solid var(--red);
+      }
+      .change-kind.config {
+        background: var(--yellow-dim);
+        color: var(--yellow);
+        border: 1px solid var(--yellow);
+      }
+
+      .change-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        flex: 1;
+      }
+      .change-path {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+      .change-expand {
+        color: var(--text-dim);
+        font-size: 12px;
+        transition: transform 0.2s;
+      }
+
+      .change-body {
+        border-top: 1px solid var(--border);
+        padding: 16px 18px;
+        background: var(--surface-2);
+        display: none;
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.7;
+      }
+
+      .change-body.open {
+        display: block;
+      }
+      .change-body ul {
+        padding-left: 20px;
+        margin-top: 8px;
+      }
+      .change-body li {
+        margin-bottom: 6px;
+      }
+      .change-body strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      /* ─── Audit section ─── */
+      .audit-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 4px;
+      }
+
+      .audit-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+      }
+
+      .audit-card h4 {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .audit-card p {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.65;
+        margin-bottom: 8px;
+      }
+
+      /* ─── Two-col layout ─── */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 4px;
+      }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+      }
+
+      .panel.old {
+        border-top: 3px solid var(--text-dim);
+      }
+      .panel.new {
+        border-top: 3px solid var(--teal);
+      }
+
+      .panel-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+
+      .panel.old .panel-label {
+        color: var(--text-dim);
+      }
+      .panel.new .panel-label {
+        color: var(--teal);
+      }
+
+      .panel ul {
+        padding-left: 18px;
+      }
+      .panel li {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 7px;
+        line-height: 1.55;
+      }
+      .panel li strong {
+        color: var(--text);
+      }
+
+      /* ─── Env var list ─── */
+      .env-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .env-row {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        padding: 8px 14px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .env-row.new {
+        border-left: 3px solid var(--teal);
+      }
+      .env-row.existing {
+        border-left: 3px solid var(--border);
+      }
+      .env-name {
+        color: var(--teal);
+        font-weight: 600;
+        min-width: 240px;
+      }
+      .env-existing .env-name {
+        color: var(--text-dim);
+      }
+      .env-value {
+        color: var(--text-muted);
+        font-size: 11px;
+      }
+      .env-tag {
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 3px;
+        margin-left: auto;
+        font-weight: 700;
+      }
+      .env-tag.new-tag {
+        background: var(--teal-dim);
+        color: var(--teal);
+        border: 1px solid var(--teal);
+      }
+      .env-tag.exists-tag {
+        background: var(--surface-3);
+        color: var(--text-dim);
+        border: 1px solid var(--border-bright);
+      }
+
+      /* ─── Scrollbar ─── */
+      ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 3px;
+      }
+
+      /* ─── Divider ─── */
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 32px 0;
+      }
+
+      @media (max-width: 900px) {
+        nav {
+          display: none;
+        }
+        main {
+          padding: 24px 20px;
+        }
+        .two-col,
+        .audit-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <!-- ─── Sidebar ─── -->
+      <nav>
+        <div class="nav-logo">
+          <h1>Expense Server v2</h1>
+          <p>Token Exchange Architecture</p>
+        </div>
+
+        <div class="nav-section">Overview</div>
+        <a href="#overview"
+          ><span class="dot" style="background: var(--teal)"></span> What's
+          Changing & Why</a
+        >
+        <a href="#resources"
+          ><span class="dot" style="background: var(--blue)"></span> Two
+          Resources</a
+        >
+
+        <div class="nav-section">Architecture</div>
+        <a href="#old-arch"
+          ><span class="dot" style="background: var(--text-dim)"></span> Current
+          Architecture</a
+        >
+        <a href="#new-arch"
+          ><span class="dot" style="background: var(--teal)"></span> New
+          Architecture</a
+        >
+        <a href="#token-flow"
+          ><span class="dot" style="background: var(--purple)"></span> Token
+          Exchange Flow</a
+        >
+        <a href="#scope-design"
+          ><span class="dot" style="background: var(--blue)"></span> Scope
+          Design</a
+        >
+
+        <div class="nav-section">Auth Server Config</div>
+        <a href="#lr-config"
+          ><span class="dot" style="background: var(--yellow)"></span>
+          LoginRadius Setup</a
+        >
+
+        <div class="nav-section">Code Changes</div>
+        <a href="#changes"
+          ><span class="dot" style="background: var(--orange)"></span> Required
+          Changes</a
+        >
+        <a href="#env-vars"
+          ><span class="dot" style="background: var(--green)"></span> Env
+          Variables</a
+        >
+
+        <div class="nav-section">Audit Trail</div>
+        <a href="#audit"
+          ><span class="dot" style="background: var(--pink)"></span> Agent vs
+          Direct Audit</a
+        >
+        <a href="#audit-collection"
+          ><span class="dot" style="background: var(--pink)"></span> Audit Log
+          Collection</a
+        >
+
+        <div class="nav-section">Frontend</div>
+        <a href="#react-app"
+          ><span class="dot" style="background: var(--green)"></span> React App
+          & Activity Page</a
+        >
+
+        <div class="nav-section">Reference</div>
+        <a href="#rfc8693"
+          ><span class="dot" style="background: var(--orange)"></span> RFC 8693
+          Deep Dive</a
+        >
+      </nav>
+
+      <!-- ─── Main ─── -->
+      <main>
+        <!-- Hero -->
+        <div class="hero" id="overview">
+          <div class="hero-eyebrow">RFC 8693 · OAuth 2.1 · MCP Auth</div>
+          <h1>MCP Auth + <span>Token Exchange</span><br />Architecture</h1>
+          <p>
+            The expense server now demonstrates a second OAuth security pattern
+            alongside MCP Auth:
+            <strong>RFC 8693 Token Exchange</strong>. The MCP layer and the REST
+            API are registered as separate protected resources. An AI agent
+            holding a coarse <em>delegation</em> token exchanges it just-in-time
+            for a narrow <em>capability</em> token — scoped to exactly what the
+            current tool invocation needs — before calling the REST API on the
+            user's behalf.
+          </p>
+          <div class="hero-chips">
+            <span class="chip teal">RFC 8693 Token Exchange</span>
+            <span class="chip blue">MCP Auth (OAuth 2.1)</span>
+            <span class="chip purple">Subject + Actor Token Delegation</span>
+            <span class="chip green">Agent vs Direct Audit Trail</span>
+            <span class="chip yellow">LoginRadius AS</span>
+          </div>
+        </div>
+
+        <!-- What's changing and why -->
+        <div class="section" id="whats-changing">
+          <div class="section-label">Context</div>
+          <h2>What's Changing & Why</h2>
+          <div class="section-sub">
+            The existing system is a single resource server where the MCP tools
+            directly call service and repository layers. The new system
+            separates concerns: the MCP server becomes a
+            <em>trusted intermediary</em> that holds delegation authority, while
+            the REST API becomes an independently-guarded resource that only
+            accepts tokens issued specifically for it.
+          </div>
+
+          <div class="two-col">
+            <div class="panel old">
+              <div class="panel-label">Current (v1)</div>
+              <ul>
+                <li>Single resource server, one <code>aud</code> value</li>
+                <li>
+                  MCP tools directly invoke
+                  <strong>Services → Repositories → SQLite</strong>
+                </li>
+                <li>
+                  Same fine-grained scopes (<code>expense:approve</code> etc.)
+                  used by both MCP and REST routes
+                </li>
+                <li>
+                  One <code>authMiddleware</code> validates all incoming tokens
+                </li>
+                <li>
+                  No distinction between "user called REST directly" vs "agent
+                  acted on user's behalf"
+                </li>
+                <li>
+                  Audit log captures <em>who</em> but not <em>how</em> (agent vs
+                  direct)
+                </li>
+              </ul>
+            </div>
+            <div class="panel new">
+              <div class="panel-label">New (v2)</div>
+              <ul>
+                <li>
+                  <strong>Two registered resources</strong>:
+                  <code>https://mcp.server</code> and
+                  <code>https://rest.server</code>
+                </li>
+                <li>
+                  MCP tools call the <strong>REST API over HTTP</strong> — no
+                  direct service/DB access
+                </li>
+                <li>
+                  MCP token carries only
+                  <strong><code>mcp:tools</code></strong> — a coarse delegation
+                  scope
+                </li>
+                <li>
+                  REST API token carries fine-grained scopes, obtained via
+                  <strong>token exchange per tool call</strong>
+                </li>
+                <li>
+                  REST API rejects any token with
+                  <code>aud=mcp.server</code> (hard boundary)
+                </li>
+                <li>
+                  Audit log distinguishes
+                  <strong>direct user calls vs agent-delegated calls</strong>
+                  via <code>act</code> claim
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout teal" style="margin-top: 24px">
+            <div class="callout-icon">🔑</div>
+            <div>
+              <strong>The core security story:</strong> The user consented to
+              <code>mcp:tools</code> — a single coarse scope. The AI agent — not
+              the user — decides it needs <code>expense:approve</code>
+              for this specific tool call and requests it just-in-time via token
+              exchange. The user never pre-approved each individual action. The
+              AS validates that the user's identity permits the requested scope,
+              then issues the narrowest possible token for that single
+              operation.
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Resources -->
+        <div class="section" id="resources">
+          <div class="section-label">Resource Design</div>
+          <h2>Two Protected Resources</h2>
+          <div class="section-sub">
+            Both resources run in the same Node.js process on
+            <code>localhost:3001</code>. The separation is
+            <strong>logical</strong> — enforced by distinct
+            <code>aud</code> claims and separate Protected Resource Metadata
+            endpoints — not a network split.
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Resource</th>
+                <th>Identifier (aud)</th>
+                <th>Scopes defined here</th>
+                <th>Who sends tokens to this resource</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>MCP Server</strong></td>
+                <td><code>https://mcp.server</code></td>
+                <td><span class="badge teal">mcp:tools</span></td>
+                <td>MCP clients: Claude Desktop, Claude Code, VS Code, etc.</td>
+              </tr>
+              <tr>
+                <td><strong>REST API</strong></td>
+                <td><code>https://rest.server</code></td>
+                <td>
+                  <span class="badge blue">expense:submit</span>
+                  <span class="badge blue">expense:view:own</span>
+                  <span class="badge blue">expense:view:team</span>
+                  <span class="badge blue">expense:view:all</span>
+                  <span class="badge blue">expense:approve</span>
+                  <span class="badge blue">expense:report:generate</span>
+                </td>
+                <td>
+                  <strong>Exchanged tokens</strong> (from MCP server via token
+                  exchange)<br />
+                  <strong>Direct user tokens</strong> (if REST API is called
+                  directly, e.g. by a browser client or Postman)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="callout warn" style="margin-top: 20px">
+            <div class="callout-icon">⚠️</div>
+            <div>
+              The REST API must
+              <strong
+                >reject tokens with <code>aud=https://mcp.server</code></strong
+              >. The MCP server must
+              <strong
+                >reject tokens with <code>aud=https://rest.server</code></strong
+              >. This audience enforcement is the hard boundary between the two
+              resources.
+            </div>
+          </div>
+        </div>
+
+        <!-- Old Architecture -->
+        <div class="section" id="old-arch">
+          <div class="section-label">Before</div>
+          <h2>Current Architecture</h2>
+          <div class="section-sub">
+            MCP tools and REST routes share a single auth layer and call into
+            the same service layer directly. There is one resource, one token
+            type, one set of scopes.
+          </div>
+
+          <div class="diagram">
+            <div class="diagram-title">
+              v1 — Single Resource, Direct Execution
+            </div>
+
+            <div class="flow-label">MCP Clients / HTTP Clients</div>
+            <div class="flow-row">
+              <div class="fbox blue">Claude Desktop / Code</div>
+              <div class="fbox blue">Browser / Postman</div>
+            </div>
+
+            <div class="farrow down">↓</div>
+            <div class="flow-label">
+              Bearer token — aud: expense-server, scp: expense:approve etc.
+            </div>
+
+            <div class="flow-row">
+              <div class="fbox purple">MCP Tools /mcp</div>
+              <div class="fbox blue">REST Routes /api/*</div>
+            </div>
+
+            <div class="farrow down">↓</div>
+            <div class="flow-label">Shared Middleware (same for both)</div>
+            <div class="flow-row">
+              <div class="fbox yellow">authMiddleware (JWKS)</div>
+              <div class="fbox yellow">requireRoles / requireScopes</div>
+              <div class="fbox yellow">auditMiddleware</div>
+            </div>
+
+            <div class="farrow down">↓</div>
+            <div class="flow-label">Business Logic (direct invocation)</div>
+            <div class="flow-row">
+              <div class="fbox green">Controllers</div>
+              <div class="fbox">→</div>
+              <div class="fbox green">Services</div>
+              <div class="fbox">→</div>
+              <div class="fbox green">Repositories</div>
+              <div class="fbox">→</div>
+              <div class="fbox green">SQLite</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- New Architecture -->
+        <div class="section" id="new-arch">
+          <div class="section-label">After</div>
+          <h2>New Architecture</h2>
+          <div class="section-sub">
+            The MCP server becomes a thin intermediary. For every tool
+            invocation, it performs a token exchange with LoginRadius to obtain
+            a narrow REST API token, then calls the REST API over HTTP. The REST
+            API remains the single source of truth for business logic.
+          </div>
+
+          <div class="diagram">
+            <div class="diagram-title">
+              v2 — Two Resources, Token Exchange per Tool Call
+            </div>
+
+            <div class="flow-label">Step 1 — User connects MCP client</div>
+            <div class="flow-row">
+              <div class="fbox blue">Claude Desktop / Code / VS Code</div>
+              <div class="farrow">→</div>
+              <div class="fbox yellow">LoginRadius AS</div>
+              <div class="farrow">→</div>
+              <div class="fbox teal">
+                User token aud=mcp.server scp=mcp:tools
+              </div>
+            </div>
+
+            <div class="farrow down" style="margin: 10px 0">↓</div>
+            <div class="flow-label">
+              Step 2 — Tool is invoked (e.g. approve_expense)
+            </div>
+            <div class="flow-row">
+              <div class="fbox purple">MCP Server /mcp</div>
+              <div class="farrow">receives</div>
+              <div class="fbox teal">aud=mcp.server scp=mcp:tools</div>
+            </div>
+            <div class="flow-row" style="margin-top: 6px">
+              <div class="fbox purple">
+                authMiddleware validates aud=mcp.server
+              </div>
+            </div>
+
+            <div class="farrow down" style="margin: 10px 0">↓</div>
+            <div class="flow-label">
+              Step 3a — MCP Server obtains its own M2M actor token
+            </div>
+            <div class="flow-row">
+              <div class="fbox purple">MCP Server</div>
+              <div class="farrow">→ grant_type=client_credentials →</div>
+              <div class="fbox yellow">LoginRadius AS</div>
+            </div>
+            <div
+              class="flow-row"
+              style="
+                margin-top: 6px;
+                font-size: 11px;
+                font-family: var(--mono);
+                color: var(--text-dim);
+              "
+            >
+              client_id + client_secret · resource=https://rest.server ·
+              scope=&lt;scopes MCP server may act with&gt;
+            </div>
+            <div class="flow-row" style="margin-top: 8px">
+              <div class="fbox orange">
+                M2M actor token aud=rest.server sub=mcp-client-id (no end-user
+                identity)
+              </div>
+            </div>
+
+            <div class="farrow down" style="margin: 10px 0">↓</div>
+            <div class="flow-label">
+              Step 3b — Token Exchange (subject_token + actor_token, per call,
+              just-in-time)
+            </div>
+            <div class="flow-row">
+              <div class="fbox purple">MCP Server</div>
+              <div class="farrow">→ grant_type=token-exchange →</div>
+              <div class="fbox yellow">LoginRadius AS</div>
+            </div>
+            <div
+              class="flow-row"
+              style="
+                margin-top: 6px;
+                font-size: 11px;
+                font-family: var(--mono);
+                color: var(--text-dim);
+              "
+            >
+              subject_token=&lt;user's mcp token&gt; · actor_token=&lt;M2M token
+              from 3a&gt; · resource=https://rest.server · scope=expense:approve
+            </div>
+            <div class="flow-row" style="margin-top: 8px">
+              <div class="fbox yellow">LoginRadius AS</div>
+              <div class="farrow">→</div>
+              <div class="fbox green">
+                Exchanged token aud=rest.server sub=user-id scp=expense:approve
+                act.sub=mcp-client-id
+              </div>
+            </div>
+
+            <div class="farrow down" style="margin: 10px 0">↓</div>
+            <div class="flow-label">
+              Step 4 — REST API call with exchanged token
+            </div>
+            <div class="flow-row">
+              <div class="fbox purple">MCP Server</div>
+              <div class="farrow">→ POST /api/expenses/:id/approve →</div>
+              <div class="fbox blue">REST API</div>
+            </div>
+            <div class="flow-row" style="margin-top: 6px">
+              <div class="fbox blue">
+                authMiddleware validates aud=rest.server
+              </div>
+              <div class="fbox blue">requireScopes(expense:approve)</div>
+              <div class="fbox blue">auditMiddleware (records act.sub)</div>
+            </div>
+
+            <div class="farrow down" style="margin: 10px 0">↓</div>
+            <div class="flow-label">Step 5 — Business Logic (unchanged)</div>
+            <div class="flow-row">
+              <div class="fbox green">Controllers</div>
+              <div class="farrow">→</div>
+              <div class="fbox green">Services</div>
+              <div class="farrow">→</div>
+              <div class="fbox green">Repositories</div>
+              <div class="farrow">→</div>
+              <div class="fbox green">SQLite</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Token Exchange Flow (detailed) -->
+        <div class="section" id="token-flow">
+          <div class="section-label">Token Exchange Detail</div>
+          <h2>Token Exchange Flow</h2>
+          <div class="section-sub">
+            This is a <strong>delegation</strong> exchange per RFC 8693 §1.1 —
+            both a <code>subject_token</code> (the end user's identity) and an
+            <code>actor_token</code> (the MCP server's own machine identity) are
+            presented to the token endpoint. The resulting token carries
+            <strong>both</strong> identities: <code>sub</code> stays the user,
+            <code>act.sub</code> becomes the MCP server. The same OAuth client
+            (<code>client_id</code>/<code>client_secret</code>) is used to
+            obtain the actor token and to authenticate the exchange request
+            itself.
+          </div>
+
+          <div class="callout purple">
+            <div class="callout-icon">🪪</div>
+            <div>
+              <strong>Why an actor_token at all?</strong> Without it, this would
+              be a plain "subject-only" exchange — LR would issue a token that's
+              indistinguishable from one the user obtained directly. Per RFC
+              8693:
+              <em
+                >"if an act claim is added to the exchanged token, this is
+                considered a delegation. If the act claim is missing from the
+                exchanged token, this is considered an impersonation."</em
+              >
+              Presenting an <code>actor_token</code> alongside the
+              <code>subject_token</code> is what tells LoginRadius "issue a
+              delegated token, not an impersonated one" — which is exactly the
+              audit trail this demo needs.
+            </div>
+          </div>
+
+          <!-- Numbered steps -->
+          <div style="margin-bottom: 32px">
+            <div class="flow-step">
+              <div class="flow-step-connector">
+                <div class="step-num blue">1</div>
+                <div class="step-line"></div>
+              </div>
+              <div class="step-content">
+                <div class="step-title">User authorizes the MCP client</div>
+                <div class="step-desc">
+                  Claude Desktop (or any MCP client) initiates an Authorization
+                  Code + PKCE flow against LoginRadius. The user consents to the
+                  <code>mcp:tools</code> scope on resource
+                  <code>https://mcp.server</code>. This token arrives at the MCP
+                  server in every tool call's request header.
+                </div>
+                <div class="step-token">
+                  <span class="token-part aud">aud = https://mcp.server</span>
+                  <span class="token-part scp">scp = mcp:tools</span>
+                  <span class="token-part sub">sub = user-lr-id</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flow-step">
+              <div class="flow-step-connector">
+                <div class="step-num purple">2</div>
+                <div class="step-line"></div>
+              </div>
+              <div class="step-content">
+                <div class="step-title">
+                  Tool is invoked — MCP server extracts the user token from the
+                  header
+                </div>
+                <div class="step-desc">
+                  The MCP server validates the incoming JWT from the
+                  <code>Authorization</code> header: checks
+                  <code>aud=https://mcp.server</code>, verifies signature via
+                  JWKS, and confirms <code>mcp:tools</code> is present in
+                  <code>scp</code>. This raw JWT string is held in memory as the
+                  <code>subject_token</code> for the next step — it is
+                  <strong>not</strong> persisted anywhere.
+                </div>
+              </div>
+            </div>
+
+            <div class="flow-step">
+              <div class="flow-step-connector">
+                <div class="step-num orange">3</div>
+                <div class="step-line"></div>
+              </div>
+              <div class="step-content">
+                <div class="step-title">
+                  MCP server obtains its own M2M token (the actor_token)
+                </div>
+                <div class="step-desc">
+                  Before exchanging, the MCP server authenticates as
+                  <strong>itself</strong> using
+                  <code>client_credentials</code> — this is a machine-to-machine
+                  token that represents the MCP server's own identity, not the
+                  user's. It is requested against
+                  <code>https://rest.server</code> with the scopes the MCP
+                  server is permitted to act with (a fixed list configured once,
+                  not per-call). This M2M token becomes the
+                  <code>actor_token</code> in step 4.
+                </div>
+                <pre>POST /token HTTP/1.1
+Host: <span class="hl">&lt;LR_TOKEN_ENDPOINT&gt;</span>
+Content-Type: application/x-www-form-urlencoded
+
+<span class="key">grant_type</span>=<span class="str">client_credentials</span>
+&amp;<span class="key">client_id</span>=<span class="str">&lt;shared client id&gt;</span>
+&amp;<span class="key">client_secret</span>=<span class="str">&lt;shared client secret&gt;</span>
+&amp;<span class="key">resource</span>=<span class="str">https://rest.server</span>
+&amp;<span class="key">scope</span>=<span class="str">expense:submit expense:view:own expense:view:team expense:approve expense:report:generate</span></pre>
+                <p
+                  style="
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    margin-top: 8px;
+                  "
+                >
+                  Response: an <code>access_token</code> whose
+                  <code>sub</code> = the client_id itself, with no end-user
+                  identity attached. This is the MCP server's "badge" — proof of
+                  its own identity, independent of any user.
+                </p>
+                <p
+                  style="
+                    font-size: 12px;
+                    color: var(--text-muted);
+                    margin-top: 10px;
+                  "
+                >
+                  <strong>Caching note:</strong> unlike the per-tool-call
+                  exchange in step 4, this M2M token can be cached and reused
+                  until it expires (client_credentials tokens are not
+                  user-specific), reducing the number of round trips to LR. For
+                  the demo, requesting it fresh per call is also acceptable and
+                  keeps the flow easy to observe in logs.
+                </p>
+              </div>
+            </div>
+
+            <div class="flow-step">
+              <div class="flow-step-connector">
+                <div class="step-num teal">4</div>
+                <div class="step-line"></div>
+              </div>
+              <div class="step-content">
+                <div class="step-title">
+                  Token Exchange request — subject_token + actor_token
+                </div>
+                <div class="step-desc">
+                  The MCP server now calls the token endpoint with
+                  <strong>both</strong> tokens present: the user's MCP token as
+                  <code>subject_token</code>, and its own M2M token as
+                  <code>actor_token</code>. Same <code>client_id</code>/<code
+                    >client_secret</code
+                  >
+                  authenticates the request. It requests
+                  <strong>only the scope this specific tool needs</strong> —
+                  least privilege per call, decided by the MCP server, not
+                  pre-granted by the user.
+                </div>
+                <pre>POST /token HTTP/1.1
+Host: <span class="hl">&lt;LR_TOKEN_ENDPOINT&gt;</span>
+Content-Type: application/x-www-form-urlencoded
+
+<span class="key">grant_type</span>=<span class="str">urn:ietf:params:oauth:grant-type:token-exchange</span>
+&amp;<span class="key">subject_token</span>=<span class="str">&lt;user's MCP access token, from request header&gt;</span>
+&amp;<span class="key">subject_token_type</span>=<span class="str">urn:ietf:params:oauth:token-type:access_token</span>
+&amp;<span class="key">actor_token</span>=<span class="str">&lt;MCP server's M2M token, from step 3&gt;</span>
+&amp;<span class="key">actor_token_type</span>=<span class="str">urn:ietf:params:oauth:token-type:access_token</span>
+&amp;<span class="key">requested_token_type</span>=<span class="str">urn:ietf:params:oauth:token-type:access_token</span>
+&amp;<span class="key">resource</span>=<span class="str">https://rest.server</span>
+&amp;<span class="key">scope</span>=<span class="str">expense:approve</span>            <span class="cmt"># only what THIS tool needs</span>
+&amp;<span class="key">client_id</span>=<span class="str">&lt;shared client id&gt;</span>
+&amp;<span class="key">client_secret</span>=<span class="str">&lt;shared client secret&gt;</span></pre>
+                <p
+                  style="
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    margin-top: 8px;
+                  "
+                >
+                  Presenting <code>actor_token</code> is what makes this a
+                  <strong>delegation</strong> exchange rather than a
+                  subject-only (impersonation-style) exchange — see callout
+                  above.
+                </p>
+              </div>
+            </div>
+
+            <div class="flow-step">
+              <div class="flow-step-connector">
+                <div class="step-num green">5</div>
+                <div class="step-line"></div>
+              </div>
+              <div class="step-content">
+                <div class="step-title">
+                  LoginRadius validates both tokens and issues the composite
+                  token
+                </div>
+                <div class="step-desc">
+                  LR validates: the <code>subject_token</code> is valid and was
+                  issued to this client for <code>https://mcp.server</code>; the
+                  <code>actor_token</code> is a valid M2M token for this same
+                  client; the client is authorized to act as a delegate
+                  targeting <code>https://rest.server</code>; and the requested
+                  <code>scope</code> is within what the
+                  <strong>subject user's role</strong> permits on
+                  <code>https://rest.server</code> (not what the actor is
+                  capable of — the subject's grants are the ceiling). It then
+                  returns a composite token.
+                </div>
+                <pre>{
+  <span class="key">"access_token"</span>: <span class="str">"&lt;exchanged JWT&gt;"</span>,
+  <span class="key">"issued_token_type"</span>: <span class="str">"urn:ietf:params:oauth:token-type:access_token"</span>,
+  <span class="key">"token_type"</span>: <span class="str">"Bearer"</span>,
+  <span class="key">"expires_in"</span>: <span class="num">300</span>,
+  <span class="key">"scope"</span>: <span class="str">"expense:approve"</span>
+}
+
+<span class="cmt">// Exchanged JWT payload (key claims):</span>
+{
+  <span class="key">"aud"</span>: <span class="str">"https://rest.server"</span>,
+  <span class="key">"sub"</span>: <span class="str">"&lt;user's LoginRadius ID&gt;"</span>,        <span class="cmt">// FROM subject_token — identity preserved</span>
+  <span class="key">"scp"</span>: <span class="str">"expense:approve"</span>,                 <span class="cmt">// narrowest possible scope, this call only</span>
+  <span class="key">"act"</span>: {
+    <span class="key">"sub"</span>: <span class="str">"&lt;mcp-server client_id&gt;"</span>           <span class="cmt">// FROM actor_token — RFC 8693 §4.1</span>
+  },
+  <span class="key">"client_id"</span>: <span class="str">"&lt;shared client_id&gt;"</span>            <span class="cmt">// RFC 8693 §4.3 — which client performed the exchange</span>
+}</pre>
+                <p
+                  style="
+                    font-size: 12px;
+                    color: var(--text-muted);
+                    margin-top: 10px;
+                  "
+                >
+                  Per RFC 8693 §4.1: the <code>sub</code> of the issued JWT
+                  matches the <code>subject_token</code>'s subject, and the
+                  <code>act</code> claim's <code>sub</code> matches the
+                  <code>actor_token</code>'s subject — this is the exact
+                  mechanism that lets the REST API tell user identity and agent
+                  identity apart.
+                </p>
+              </div>
+            </div>
+
+            <div class="flow-step">
+              <div class="flow-step-connector">
+                <div class="step-num yellow">6</div>
+                <div class="step-line"></div>
+              </div>
+              <div class="step-content">
+                <div class="step-title">
+                  MCP server calls the REST API with the exchanged token
+                </div>
+                <div class="step-desc">
+                  The MCP tool uses the exchanged composite token as the
+                  <code>Authorization: Bearer</code> header on its internal HTTP
+                  call to the REST API route. The original user token and the
+                  M2M token are discarded after this — only the exchanged token
+                  is sent onward.
+                </div>
+                <pre>POST /api/expenses/<span class="hl">:expenseId</span>/approve HTTP/1.1
+Host: localhost:3001
+Authorization: Bearer <span class="str">&lt;exchanged token (aud=rest.server, sub=user, act.sub=mcp-client)&gt;</span>
+Content-Type: application/json
+
+{ <span class="key">"notes"</span>: <span class="str">"Approved by AI agent on behalf of Bob"</span> }</pre>
+              </div>
+            </div>
+
+            <div class="flow-step">
+              <div class="flow-step-connector">
+                <div class="step-num orange">7</div>
+              </div>
+              <div class="step-content">
+                <div class="step-title">
+                  REST API validates, executes, and audits
+                </div>
+                <div class="step-desc">
+                  The REST API's <code>authMiddleware</code> validates
+                  <code>aud=https://rest.server</code>, checks
+                  <code>scp=expense:approve</code>, derives roles from scopes
+                  (using <code>sub</code>, never <code>act.sub</code>, for role
+                  lookup), and executes business logic exactly as before. A new
+                  <code>auditLogMiddleware</code> reads <code>sub</code> and
+                  <code>act</code> (if present) straight off the validated token
+                  and writes a row to the audit log collection — see
+                  <a href="#audit-collection" style="color: var(--teal)"
+                    >Audit Log Collection</a
+                  >
+                  below.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scope per tool mapping -->
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin-bottom: 14px;
+            "
+          >
+            Scope requested per MCP tool
+          </h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>MCP Tool</th>
+                <th>Token Exchange scope requested</th>
+                <th>REST endpoint called</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>who_am_i</code></td>
+                <td>
+                  <span class="badge grey">no exchange needed</span> (REST has
+                  no scope req.)
+                </td>
+                <td><code>GET /api/users/me</code></td>
+              </tr>
+              <tr>
+                <td><code>submit_expense</code></td>
+                <td><span class="badge blue">expense:submit</span></td>
+                <td><code>POST /api/expenses</code></td>
+              </tr>
+              <tr>
+                <td><code>list_my_expenses</code></td>
+                <td><span class="badge blue">expense:view:own</span></td>
+                <td><code>GET /api/expenses/me</code></td>
+              </tr>
+              <tr>
+                <td><code>list_team_expenses</code></td>
+                <td><span class="badge blue">expense:view:team</span></td>
+                <td><code>GET /api/expenses/team/:teamId</code></td>
+              </tr>
+              <tr>
+                <td><code>approve_expense</code></td>
+                <td><span class="badge blue">expense:approve</span></td>
+                <td><code>POST /api/expenses/:id/approve</code></td>
+              </tr>
+              <tr>
+                <td><code>reject_expense</code></td>
+                <td><span class="badge blue">expense:approve</span></td>
+                <td><code>POST /api/expenses/:id/reject</code></td>
+              </tr>
+              <tr>
+                <td><code>generate_report</code></td>
+                <td><span class="badge blue">expense:report:generate</span></td>
+                <td><code>POST /api/expenses/reports/generate</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Scope Design -->
+        <div class="section" id="scope-design">
+          <div class="section-label">OAuth Design</div>
+          <h2>Scope Design</h2>
+          <div class="section-sub">
+            Scopes are partitioned by resource. No scope is defined on both
+            resources — the two resources have entirely disjoint scope
+            namespaces.
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Scope</th>
+                <th>Defined on resource</th>
+                <th>Who holds it in their token</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge teal">mcp:tools</span></td>
+                <td><code>https://mcp.server</code></td>
+                <td>MCP clients (Claude Desktop etc.)</td>
+                <td>
+                  User delegates AI agent to invoke tools on their behalf.
+                  Coarse — not action-specific.
+                </td>
+              </tr>
+              <tr>
+                <td><span class="badge blue">expense:submit</span></td>
+                <td><code>https://rest.server</code></td>
+                <td>MCP server (via exchange) or direct REST callers</td>
+                <td>Submit new expenses</td>
+              </tr>
+              <tr>
+                <td><span class="badge blue">expense:view:own</span></td>
+                <td><code>https://rest.server</code></td>
+                <td>MCP server (via exchange) or direct REST callers</td>
+                <td>View own submitted expenses</td>
+              </tr>
+              <tr>
+                <td><span class="badge blue">expense:view:team</span></td>
+                <td><code>https://rest.server</code></td>
+                <td>MCP server (via exchange) or direct REST callers</td>
+                <td>View direct reports' expenses</td>
+              </tr>
+              <tr>
+                <td><span class="badge blue">expense:view:all</span></td>
+                <td><code>https://rest.server</code></td>
+                <td>MCP server (via exchange) or direct REST callers</td>
+                <td>View all expenses (finance_admin only)</td>
+              </tr>
+              <tr>
+                <td><span class="badge blue">expense:approve</span></td>
+                <td><code>https://rest.server</code></td>
+                <td>MCP server (via exchange) or direct REST callers</td>
+                <td>Approve or reject pending expenses</td>
+              </tr>
+              <tr>
+                <td><span class="badge blue">expense:report:generate</span></td>
+                <td><code>https://rest.server</code></td>
+                <td>MCP server (via exchange) or direct REST callers</td>
+                <td>Generate expense analytics reports</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- LoginRadius Config -->
+        <div class="section" id="lr-config">
+          <div class="section-label">Auth Server</div>
+          <h2>LoginRadius Configuration</h2>
+          <div class="section-sub">
+            Everything needed in LoginRadius to make two resources, token
+            exchange, and scope isolation work.
+          </div>
+
+          <div class="change-list">
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind config">CONFIGURE</span>
+                <span class="change-title">Resource Server 1 — MCP Server</span>
+                <span class="change-path"
+                  >LoginRadius Dashboard → Resource Servers → New</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    <strong>Resource Identifier (aud):</strong>
+                    <code>https://mcp.server</code>
+                  </li>
+                  <li>
+                    <strong>Scopes to define:</strong> <code>mcp:tools</code> —
+                    label: "Invoke expense tools via AI agent"
+                  </li>
+                  <li>
+                    This resource has
+                    <strong>no fine-grained expense scopes</strong>. The
+                    <code>mcp:tools</code> scope is the only one.
+                  </li>
+                  <li>
+                    Protected Resource Metadata endpoint will be served at
+                    <code>/.well-known/oauth-protected-resource</code> for the
+                    MCP resource (existing, update <code>resource</code> field
+                    to <code>https://mcp.server</code>).
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind config">CONFIGURE</span>
+                <span class="change-title">Resource Server 2 — REST API</span>
+                <span class="change-path"
+                  >LoginRadius Dashboard → Resource Servers → New</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    <strong>Resource Identifier (aud):</strong>
+                    <code>https://rest.server</code>
+                  </li>
+                  <li>
+                    <strong>Scopes to define:</strong> all six
+                    <code>expense:*</code> scopes as defined in current
+                    <code>McpScopes</code> constants
+                  </li>
+                  <li>
+                    Add a <strong>new</strong> Protected Resource Metadata
+                    endpoint at
+                    <code>/api/.well-known/oauth-protected-resource</code> (or a
+                    separate route) advertising
+                    <code>https://rest.server</code> as the resource.
+                  </li>
+                  <li>
+                    This resource should <strong>not</strong> have
+                    <code>mcp:tools</code> in its scope list.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind config">CONFIGURE</span>
+                <span class="change-title"
+                  >OAuth Client — Enable Token Exchange</span
+                >
+                <span class="change-path"
+                  >LoginRadius Dashboard → OAuth Apps → [shared client] → Grant
+                  Types</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    Enable grant type:
+                    <code>urn:ietf:params:oauth:grant-type:token-exchange</code>
+                  </li>
+                  <li>
+                    Configure the client as an
+                    <strong>authorized actor</strong> for token exchange
+                    targeting <code>https://rest.server</code>
+                  </li>
+                  <li>
+                    The client should be permitted to exchange subject tokens
+                    that were originally issued to
+                    <code>https://mcp.server</code>
+                  </li>
+                  <li>
+                    Scope downscoping policy: requested scope must be a subset
+                    of what the subject user is permitted on
+                    <code>https://rest.server</code>
+                  </li>
+                  <li>
+                    Token exchange response should include the
+                    <code>act</code> claim with
+                    <code>sub = client_id</code> (the MCP server's identity)
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind config">CONFIGURE</span>
+                <span class="change-title"
+                  >User Role → Scope Grants on REST Resource</span
+                >
+                <span class="change-path"
+                  >LoginRadius Dashboard → Resource Servers →
+                  https://rest.server → Scope Grants</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    When LR evaluates a token exchange request, it checks if the
+                    <code>sub</code> (user) is permitted to hold the requested
+                    scope on <code>https://rest.server</code>.
+                  </li>
+                  <li>
+                    Map user roles to permitted scopes on
+                    <code>https://rest.server</code>:
+                  </li>
+                  <li>
+                    <strong>employee role</strong> →
+                    <code>expense:submit</code>, <code>expense:view:own</code>
+                  </li>
+                  <li>
+                    <strong>manager role</strong> → above +
+                    <code>expense:view:team</code>, <code>expense:approve</code>
+                  </li>
+                  <li>
+                    <strong>finance_admin role</strong> → all scopes including
+                    <code>expense:view:all</code>,
+                    <code>expense:report:generate</code>
+                  </li>
+                  <li>
+                    If a user has only <code>employee</code> role and the MCP
+                    server requests <code>expense:approve</code> via exchange,
+                    LR must <strong>reject</strong> the exchange (or return a
+                    token without the scope). This is the AS enforcing
+                    least-privilege even against the agent's request.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Code Changes -->
+        <div class="section" id="changes">
+          <div class="section-label">Implementation</div>
+          <h2>Required Code Changes</h2>
+          <div class="section-sub">
+            Changes are confined to the MCP layer, the auth middleware, and a
+            new token exchange utility. The service layer, repositories, and
+            REST controllers are <strong>unchanged</strong>.
+          </div>
+
+          <div class="change-list">
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind new">NEW</span>
+                <span class="change-title">Token Exchange Utility</span>
+                <span class="change-path">src/utils/tokenExchange.ts</span>
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <p>
+                  New module that encapsulates two calls to LoginRadius: getting
+                  the MCP server's own M2M actor token, and performing the
+                  delegated RFC 8693 exchange using that actor token plus the
+                  user's subject token.
+                </p>
+                <ul>
+                  <li>
+                    <code>getActorToken(): Promise&lt;string&gt;</code> —
+                    <code>client_credentials</code> grant, cached in memory
+                    until near expiry
+                  </li>
+                  <li>
+                    <code
+                      >exchangeToken(subjectToken: string, scope: string):
+                      Promise&lt;string&gt;</code
+                    >
+                    — performs the delegation exchange using
+                    <code>subject_token</code> + <code>actor_token</code>
+                  </li>
+                  <li>
+                    Both POST to <code>LR_TOKEN_ENDPOINT</code>; the exchange
+                    call additionally sends <code>actor_token</code>,
+                    <code>actor_token_type</code>, <code>resource</code>, and
+                    the requested <code>scope</code>
+                  </li>
+                  <li>
+                    Returns the <code>access_token</code> from the response
+                  </li>
+                  <li>
+                    Throws a typed error (<code>TokenExchangeError</code>) on
+                    failure for clean propagation back to the MCP tool caller
+                  </li>
+                  <li>
+                    Actor token (step 3) is cached; the exchange itself (step 4)
+                    is requested fresh per tool call so the flow stays
+                    observable in logs
+                  </li>
+                </ul>
+                <pre><span class="cmt">// src/utils/tokenExchange.ts (sketch)</span>
+
+<span class="cmt">// In-memory cache for the MCP server's own M2M token — reused until ~30s before expiry</span>
+<span class="kw">let</span> cachedActorToken: { token: <span class="str">string</span>; expiresAt: <span class="str">number</span> } | <span class="kw">null</span> = <span class="kw">null</span>
+
+<span class="kw">export async function</span> <span class="hl">getActorToken</span>(): <span class="kw">Promise</span>&lt;<span class="str">string</span>&gt; {
+  <span class="kw">if</span> (cachedActorToken && cachedActorToken.expiresAt > Date.now()) {
+    <span class="kw">return</span> cachedActorToken.token
+  }
+  <span class="kw">const</span> body = <span class="kw">new</span> URLSearchParams({
+    grant_type: <span class="str">'client_credentials'</span>,
+    client_id: env.LR_CLIENT_ID,
+    client_secret: env.LR_CLIENT_SECRET,
+    resource: env.<span class="hl">REST_RESOURCE_URL</span>,
+    scope: env.<span class="hl">MCP_SERVER_ACTOR_SCOPES</span>,  <span class="cmt">// fixed list, e.g. all expense:* scopes</span>
+  })
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(env.<span class="hl">LR_TOKEN_ENDPOINT</span>, {
+    method: <span class="str">'POST'</span>,
+    headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/x-www-form-urlencoded'</span> },
+    body,
+  })
+  <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> TokenExchangeError(<span class="kw">await</span> res.json())
+  <span class="kw">const</span> data = <span class="kw">await</span> res.json()
+  cachedActorToken = {
+    token: data.access_token,
+    expiresAt: Date.now() + (data.expires_in - <span class="num">30</span>) * <span class="num">1000</span>,
+  }
+  <span class="kw">return</span> data.access_token
+}
+
+<span class="kw">export async function</span> <span class="hl">exchangeToken</span>(
+  subjectToken: <span class="str">string</span>,
+  scope: <span class="str">string</span>
+): <span class="kw">Promise</span>&lt;<span class="str">string</span>&gt; {
+  <span class="kw">const</span> actorToken = <span class="kw">await</span> getActorToken()  <span class="cmt">// step 3</span>
+
+  <span class="kw">const</span> body = <span class="kw">new</span> URLSearchParams({
+    grant_type: <span class="str">'urn:ietf:params:oauth:grant-type:token-exchange'</span>,
+    subject_token: subjectToken,
+    subject_token_type: <span class="str">'urn:ietf:params:oauth:token-type:access_token'</span>,
+    actor_token: actorToken,
+    actor_token_type: <span class="str">'urn:ietf:params:oauth:token-type:access_token'</span>,
+    requested_token_type: <span class="str">'urn:ietf:params:oauth:token-type:access_token'</span>,
+    resource: env.<span class="hl">REST_RESOURCE_URL</span>,
+    scope,
+    client_id: env.LR_CLIENT_ID,
+    client_secret: env.LR_CLIENT_SECRET,
+  })
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(env.<span class="hl">LR_TOKEN_ENDPOINT</span>, {
+    method: <span class="str">'POST'</span>,
+    headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/x-www-form-urlencoded'</span> },
+    body,
+  })
+  <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> TokenExchangeError(<span class="kw">await</span> res.json())
+  <span class="kw">const</span> data = <span class="kw">await</span> res.json()
+  <span class="kw">return</span> data.access_token   <span class="cmt">// aud=rest.server, sub=user, act.sub=mcp client_id</span>
+}</pre>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind modify">MODIFY</span>
+                <span class="change-title"
+                  >MCP Auth Middleware — Validate aud=mcp.server only</span
+                >
+                <span class="change-path"
+                  >src/middleware/auth.middleware.ts (MCP path)</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    After JWKS validation, assert
+                    <code>token.aud === env.MCP_RESOURCE_URL</code>
+                    (<code>https://mcp.server</code>)
+                  </li>
+                  <li>
+                    Assert <code>token.scp</code> or
+                    <code>token.scope</code> contains <code>mcp:tools</code>
+                  </li>
+                  <li>
+                    <strong>Remove</strong> all
+                    <code>requireScopes(expense:*)</code> checks from the MCP
+                    layer — these now live only in the REST API
+                  </li>
+                  <li>
+                    Extract the raw JWT string (the bearer token as received)
+                    and attach it to <code>req.mcpSubjectToken</code> — MCP
+                    tools need it to call <code>exchangeToken()</code>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind modify">MODIFY</span>
+                <span class="change-title"
+                  >REST API Auth Middleware — Validate aud=rest.server
+                  only</span
+                >
+                <span class="change-path"
+                  >src/middleware/auth.middleware.ts (REST path)</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    After JWKS validation, assert
+                    <code>token.aud === env.REST_RESOURCE_URL</code>
+                    (<code>https://rest.server</code>)
+                  </li>
+                  <li>
+                    <strong>Reject</strong> any token where
+                    <code>aud=https://mcp.server</code> — return
+                    <code>401 invalid_token</code> with
+                    <code
+                      >error_description: "Token audience is not valid for this
+                      resource"</code
+                    >
+                  </li>
+                  <li>
+                    All existing <code>requireScopes</code> and
+                    <code>requireRoles</code> middleware on REST routes stay
+                    <strong>unchanged</strong>
+                  </li>
+                  <li>
+                    Extract <code>token.act?.sub</code> and attach to
+                    <code>req.actorId</code> — used by audit middleware
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind modify">MODIFY</span>
+                <span class="change-title"
+                  >MCP Tools — Replace service calls with REST API calls</span
+                >
+                <span class="change-path"
+                  >src/mcp/tools/*.ts — all 7 tool files</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <p>Each tool now follows a consistent pattern:</p>
+                <ul>
+                  <li>
+                    <strong>Step 1:</strong> Call
+                    <code
+                      >exchangeToken(req.mcpSubjectToken,
+                      'expense:approve')</code
+                    >
+                    (or whichever scope this tool needs)
+                  </li>
+                  <li>
+                    <strong>Step 2:</strong> Make an HTTP request to the
+                    corresponding REST API endpoint using the exchanged token as
+                    the <code>Authorization: Bearer</code> header
+                  </li>
+                  <li>
+                    <strong>Step 3:</strong> Return the REST API response body
+                    to the MCP caller
+                  </li>
+                  <li>
+                    Remove all direct imports of <code>Services</code> or
+                    <code>Repositories</code> from tool files
+                  </li>
+                  <li>
+                    <code>who_am_i</code> tool: calls
+                    <code>GET /api/users/me</code> with the original MCP token
+                    (no exchange needed — the <code>/api/users/me</code> route
+                    requires no scope)
+                  </li>
+                </ul>
+                <pre><span class="cmt">// Example: approve_expense tool (sketch)</span>
+<span class="kw">async function</span> <span class="hl">approve_expense</span>(args, context) {
+  <span class="cmt">// 1. Exchange for a narrow REST API token</span>
+  <span class="kw">const</span> restToken = <span class="kw">await</span> exchangeToken(
+    context.mcpSubjectToken,
+    <span class="str">'expense:approve'</span>
+  )
+  <span class="cmt">// 2. Call REST API</span>
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(
+    <span class="str">`</span><span class="hl">${env.REST_BASE_URL}</span><span class="str">/api/expenses/${args.expense_id}/approve`</span>,
+    {
+      method: <span class="str">'POST'</span>,
+      headers: {
+        Authorization: <span class="str">`Bearer ${restToken}`</span>,
+        <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>,
+      },
+      body: JSON.stringify({ notes: args.notes }),
+    }
+  )
+  <span class="cmt">// 3. Return to MCP caller</span>
+  <span class="kw">return</span> res.json()
+}</pre>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind modify">MODIFY</span>
+                <span class="change-title"
+                  >Audit Middleware — Capture act.sub (agent identity)</span
+                >
+                <span class="change-path"
+                  >src/middleware/audit.middleware.ts</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    Read <code>req.actorId</code> (populated by REST auth
+                    middleware from <code>token.act.sub</code>)
+                  </li>
+                  <li>
+                    Write a new column <code>actor_id</code> to the
+                    <code>audit_log</code> table — null when action is direct,
+                    the MCP server's <code>client_id</code> when action is via
+                    token exchange
+                  </li>
+                  <li>
+                    Add column <code>actor_type</code>: <code>'user'</code> or
+                    <code>'agent'</code> (derived from whether
+                    <code>act</code> claim is present)
+                  </li>
+                  <li>
+                    Existing <code>user_id</code>, <code>action</code>,
+                    <code>entity_id</code> columns are unchanged — user identity
+                    is always the <code>sub</code> claim from the token,
+                    regardless of whether an agent acted
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind modify">MODIFY</span>
+                <span class="change-title"
+                  >DB Schema — Add actor columns to audit_log</span
+                >
+                <span class="change-path">src/db/schema.ts</span>
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    Add <code>actor_id TEXT</code> — the
+                    <code>client_id</code> of the MCP server (from
+                    <code>act.sub</code>), or NULL if direct access
+                  </li>
+                  <li>
+                    Add
+                    <code
+                      >actor_type TEXT CHECK(actor_type IN ('user',
+                      'agent'))</code
+                    >
+                  </li>
+                  <li>
+                    No migration needed for demo — run
+                    <code>pnpm db:reset</code> to rebuild with new schema
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind new">NEW</span>
+                <span class="change-title"
+                  >Second Protected Resource Metadata endpoint</span
+                >
+                <span class="change-path">src/api/routes/meta.routes.ts</span>
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    Add
+                    <code>GET /api/.well-known/oauth-protected-resource</code>
+                    (or a second top-level well-known route)
+                  </li>
+                  <li>
+                    Returns RFC 9728 metadata advertising
+                    <code>https://rest.server</code> as the resource, with all
+                    <code>expense:*</code> scopes listed
+                  </li>
+                  <li>
+                    Existing
+                    <code>/.well-known/oauth-protected-resource</code> should be
+                    updated to advertise <code>https://mcp.server</code> with
+                    <code>mcp:tools</code> scope only
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind modify">MODIFY</span>
+                <span class="change-title">Env Config (Zod schema)</span>
+                <span class="change-path">src/config/env.ts</span>
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    Add <code>REST_RESOURCE_URL</code> — the identifier/audience
+                    for the REST API resource (<code>https://rest.server</code>)
+                  </li>
+                  <li>
+                    Add <code>LR_TOKEN_ENDPOINT</code> — LoginRadius token
+                    endpoint URL used for both the M2M client_credentials call
+                    and the token exchange POST
+                  </li>
+                  <li>
+                    Add <code>MCP_SERVER_ACTOR_SCOPES</code> — space-delimited
+                    fixed scope list the MCP server requests for its own M2M
+                    actor token (e.g. all six <code>expense:*</code> scopes —
+                    the exchange step always narrows down from this ceiling,
+                    never up)
+                  </li>
+                  <li>
+                    Existing <code>MCP_RESOURCE_URL</code> stays as
+                    <code>https://mcp.server</code>
+                  </li>
+                  <li>
+                    All new vars are required (no defaults) to fail loudly
+                    during startup if misconfigured
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind remove">REMOVE</span>
+                <span class="change-title"
+                  >Scope checks from MCP tool layer</span
+                >
+                <span class="change-path"
+                  >src/mcp/tools/*.ts + src/mcp/middleware</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    Remove <code>requireScopes('expense:approve')</code> and
+                    similar checks applied to individual MCP tools
+                  </li>
+                  <li>
+                    The MCP layer now only cares about one thing:
+                    <code>mcp:tools</code> present in the user token
+                  </li>
+                  <li>
+                    Fine-grained scope enforcement is
+                    <strong>entirely delegated</strong> to the REST API — this
+                    is intentional and is the architectural point of the demo
+                  </li>
+                  <li>
+                    Remove direct imports of <code>ExpenseService</code>,
+                    <code>ReportService</code> etc. from tool files
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind new">NEW</span>
+                <span class="change-title"
+                  >Audit Log Collection (new SQLite table)</span
+                >
+                <span class="change-path"
+                  >src/db/schema.ts,
+                  src/db/repositories/auditLog.repository.ts</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <p>
+                  Replaces the simpler existing <code>audit_log</code> table
+                  with a richer collection purpose-built to drive the new
+                  Activity page. See full schema in
+                  <a href="#audit-collection" style="color: var(--teal)"
+                    >Audit Log Collection</a
+                  >
+                  below.
+                </p>
+                <ul>
+                  <li>
+                    New columns beyond the current table:
+                    <code>actor_type</code>, <code>actor_client_id</code>,
+                    <code>action</code>, <code>resource_type</code>,
+                    <code>resource_id</code>, <code>scope_used</code>
+                  </li>
+                  <li>
+                    New repository method:
+                    <code>findForUser(userId, filters)</code>,
+                    <code>findForTeam(managerId, filters)</code>,
+                    <code>findAll(filters)</code> — mirrors the existing expense
+                    visibility tiers (own / team / all)
+                  </li>
+                  <li>
+                    No migration needed for demo — run
+                    <code>pnpm db:reset</code> to rebuild with new schema
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind new">NEW</span>
+                <span class="change-title">Audit Log Middleware</span>
+                <span class="change-path"
+                  >src/middleware/auditLog.middleware.ts</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <p>
+                  Replaces the existing <code>auditMiddleware</code> — applied
+                  to every REST route, not just mutations, so the Activity page
+                  can also show read access (e.g. "Claude viewed your
+                  expenses").
+                </p>
+                <ul>
+                  <li>
+                    Runs <strong>after</strong> <code>authMiddleware</code> so
+                    the validated token claims are available on
+                    <code>req.auth</code>
+                  </li>
+                  <li>
+                    Reads <code>req.auth.sub</code> →
+                    <code>user_id</code> column (always present)
+                  </li>
+                  <li>
+                    Reads <code>req.auth.act?.sub</code> → if present,
+                    <code>actor_type='agent'</code> and
+                    <code>actor_client_id = act.sub</code>; if absent,
+                    <code>actor_type='user'</code> and
+                    <code>actor_client_id=null</code>
+                  </li>
+                  <li>
+                    Reads <code>req.auth.scp</code> (or the single scope used) →
+                    <code>scope_used</code> column, for transparency on exactly
+                    which permission authorized this action
+                  </li>
+                  <li>
+                    Derives <code>action</code> from route + method (e.g.
+                    <code>POST /api/expenses/:id/approve</code> →
+                    <code>"approve_expense"</code>) using the same naming as the
+                    MCP tool names, so direct and agent-driven actions read
+                    identically in the log
+                  </li>
+                  <li>
+                    Writes one row per request, after the controller responds,
+                    including the HTTP status (so failed attempts are visible
+                    too)
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="change-card">
+              <div class="change-header" onclick="toggle(this)">
+                <span class="change-kind new">NEW</span>
+                <span class="change-title">Activity REST endpoint</span>
+                <span class="change-path"
+                  >src/api/routes/activity.routes.ts,
+                  src/api/controllers/activity.controller.ts</span
+                >
+                <span class="change-expand">▼</span>
+              </div>
+              <div class="change-body">
+                <ul>
+                  <li>
+                    <code>GET /api/activity</code> — returns audit log rows,
+                    scoped by the caller's role exactly like expense visibility:
+                  </li>
+                  <li>
+                    <strong>employee</strong> → own actions only (<code
+                      >WHERE user_id = sub</code
+                    >)
+                  </li>
+                  <li>
+                    <strong>manager</strong> → own + direct reports' actions
+                    (<code>WHERE user_id IN (self, team members)</code>)
+                  </li>
+                  <li>
+                    <strong>finance_admin</strong> → all actions system-wide
+                  </li>
+                  <li>
+                    Query params: <code>actorType</code> (user/agent),
+                    <code>action</code>, <code>fromDate</code>,
+                    <code>toDate</code>, <code>page</code>, <code>limit</code> —
+                    same pagination shape as existing list endpoints
+                  </li>
+                  <li>
+                    No new scope required beyond existing role — reuses
+                    <code>expense:view:own</code> /
+                    <code>expense:view:team</code> /
+                    <code>expense:view:all</code> as the gating scopes, since
+                    activity visibility mirrors expense visibility
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Env Variables -->
+        <div class="section" id="env-vars">
+          <div class="section-label">Configuration</div>
+          <h2>Environment Variables</h2>
+
+          <div class="env-list">
+            <div class="env-row new">
+              <span class="env-name">REST_RESOURCE_URL</span>
+              <span class="env-value"
+                >https://rest.server — audience claim for REST API tokens</span
+              >
+              <span class="env-tag new-tag">NEW</span>
+            </div>
+            <div class="env-row new">
+              <span class="env-name">LR_TOKEN_ENDPOINT</span>
+              <span class="env-value"
+                >https://&lt;your-lr-app&gt;.hub.loginradius.com/token — used
+                for the M2M call and the token exchange POST</span
+              >
+              <span class="env-tag new-tag">NEW</span>
+            </div>
+            <div class="env-row new">
+              <span class="env-name">MCP_SERVER_ACTOR_SCOPES</span>
+              <span class="env-value"
+                >"expense:submit expense:view:own expense:view:team
+                expense:approve expense:report:generate" — ceiling for the MCP
+                server's M2M actor token</span
+              >
+              <span class="env-tag new-tag">NEW</span>
+            </div>
+            <div class="env-row existing">
+              <span class="env-name" style="color: var(--text-dim)"
+                >MCP_RESOURCE_URL</span
+              >
+              <span class="env-value"
+                >https://mcp.server — now explicitly the MCP resource aud
+                (already existed)</span
+              >
+              <span class="env-tag exists-tag">EXISTING</span>
+            </div>
+            <div class="env-row existing">
+              <span class="env-name" style="color: var(--text-dim)"
+                >LR_ISSUER</span
+              >
+              <span class="env-value">Unchanged</span>
+              <span class="env-tag exists-tag">EXISTING</span>
+            </div>
+            <div class="env-row existing">
+              <span class="env-name" style="color: var(--text-dim)"
+                >LR_JWKS_URI</span
+              >
+              <span class="env-value"
+                >Unchanged — both resources validate via same JWKS</span
+              >
+              <span class="env-tag exists-tag">EXISTING</span>
+            </div>
+            <div class="env-row existing">
+              <span class="env-name" style="color: var(--text-dim)"
+                >LR_CLIENT_ID</span
+              >
+              <span class="env-value"
+                >Unchanged — same client used for the M2M actor token and as the
+                token-exchange caller</span
+              >
+              <span class="env-tag exists-tag">EXISTING</span>
+            </div>
+            <div class="env-row existing">
+              <span class="env-name" style="color: var(--text-dim)"
+                >LR_CLIENT_SECRET</span
+              >
+              <span class="env-value"
+                >Unchanged — used in both the client_credentials call and token
+                exchange client_secret_post auth</span
+              >
+              <span class="env-tag exists-tag">EXISTING</span>
+            </div>
+            <div class="env-row existing">
+              <span class="env-name" style="color: var(--text-dim)"
+                >LR_INTROSPECT_URL</span
+              >
+              <span class="env-value">Unchanged</span>
+              <span class="env-tag exists-tag">EXISTING</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail -->
+        <div class="section" id="audit">
+          <div class="section-label">Security & Observability</div>
+          <h2>Audit Trail — Agent vs Direct Access</h2>
+          <div class="section-sub">
+            The REST API can always distinguish whether an action was performed
+            by a user directly or by an AI agent acting on the user's behalf.
+            This is encoded in the token itself via the <code>act</code> claim
+            (RFC 8693 §4.1) and persisted to the audit log.
+          </div>
+
+          <div class="callout purple">
+            <div class="callout-icon">🧩</div>
+            <div>
+              <strong>Key insight:</strong> <code>sub</code> always identifies
+              the <em>user</em>. <code>act.sub</code> identifies the
+              <em>actor</em> (the MCP server's client ID). When
+              <code>act</code> is absent, the action is direct. When it's
+              present, the action was delegated. The user identity is never lost
+              in either path.
+            </div>
+          </div>
+
+          <div class="audit-grid">
+            <div class="audit-card">
+              <h4>🧑 Direct User Access (REST API called directly)</h4>
+              <p>
+                User authenticates with LoginRadius and obtains a token with
+                <code>aud=https://rest.server</code> directly (e.g. from a
+                browser app or Postman).
+              </p>
+              <p>
+                Token has <strong>no <code>act</code> claim</strong>.
+              </p>
+              <pre>{
+  <span class="key">"sub"</span>: <span class="str">"lr-user-id"</span>,
+  <span class="key">"aud"</span>: <span class="str">"https://rest.server"</span>,
+  <span class="key">"scp"</span>: <span class="str">"expense:approve"</span>
+  <span class="cmt">// no "act" claim</span>
+}</pre>
+              <p style="margin-top: 10px">Audit log entry:</p>
+              <pre>{
+  <span class="key">"user_id"</span>: <span class="str">"lr-user-id"</span>,
+  <span class="key">"action"</span>: <span class="str">"approve_expense"</span>,
+  <span class="key">"actor_type"</span>: <span class="str">"user"</span>,
+  <span class="key">"actor_client_id"</span>: <span class="kw">null</span>
+}</pre>
+            </div>
+
+            <div class="audit-card">
+              <h4>🤖 Agent Access (via MCP + Token Exchange)</h4>
+              <p>
+                MCP server performed token exchange. The exchanged token carries
+                the <code>act</code> claim, recording the MCP server's client ID
+                as the actor.
+              </p>
+              <p>
+                Token has
+                <strong><code>act.sub = MCP server's client_id</code></strong
+                >.
+              </p>
+              <pre>{
+  <span class="key">"sub"</span>: <span class="str">"lr-user-id"</span>,       <span class="cmt">// still the user</span>
+  <span class="key">"aud"</span>: <span class="str">"https://rest.server"</span>,
+  <span class="key">"scp"</span>: <span class="str">"expense:approve"</span>,
+  <span class="key">"act"</span>: {
+    <span class="key">"sub"</span>: <span class="str">"mcp-client-id"</span> <span class="cmt">// agent identity</span>
+  }
+}</pre>
+              <p style="margin-top: 10px">Audit log entry:</p>
+              <pre>{
+  <span class="key">"user_id"</span>: <span class="str">"lr-user-id"</span>,
+  <span class="key">"action"</span>: <span class="str">"approve_expense"</span>,
+  <span class="key">"actor_type"</span>: <span class="str">"agent"</span>,
+  <span class="key">"actor_client_id"</span>: <span class="str">"mcp-client-id"</span>
+}</pre>
+            </div>
+          </div>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin: 28px 0 12px;
+            "
+          >
+            What the audit log now answers
+          </h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Query</th>
+                <th>How to answer from audit_log</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"Did any AI agent approve expenses this week?"</td>
+                <td>
+                  <code
+                    >WHERE actor_type = 'agent' AND action =
+                    'approve_expense'</code
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td>"Which expenses did Bob approve himself vs via Claude?"</td>
+                <td>
+                  <code
+                    >WHERE user_id = bob_id AND action = 'approve_expense' GROUP
+                    BY actor_type</code
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  "What did a specific MCP client do on behalf of all users?"
+                </td>
+                <td><code>WHERE actor_client_id = 'mcp-client-id'</code></td>
+              </tr>
+              <tr>
+                <td>"Show all actions taken by agents on Carol's behalf"</td>
+                <td>
+                  <code>WHERE user_id = carol_id AND actor_type = 'agent'</code>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  "Was this specific expense approved by a human or an AI?"
+                </td>
+                <td>
+                  <code
+                    >WHERE entity_id = expense_id AND action =
+                    'approve_expense'</code
+                  >
+                  → check <code>actor_type</code>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="callout success" style="margin-top: 24px">
+            <div class="callout-icon">✅</div>
+            <div>
+              <strong>Non-repudiation guarantee:</strong> Even when an AI agent
+              acts on a user's behalf, the
+              <strong
+                >user's identity (<code>sub</code>) is always recorded</strong
+              >. The user cannot claim "I didn't do that" without also claiming
+              their LoginRadius account was compromised — because the token
+              exchange preserves the <code>sub</code> claim end-to-end. The
+              agent is additionally identified in <code>act.sub</code>, giving a
+              complete delegation chain.
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Log Collection -->
+        <div class="section" id="audit-collection">
+          <div class="section-label">Data Model</div>
+          <h2>Audit Log Collection</h2>
+          <div class="section-sub">
+            A new, richer <code>audit_log</code> table replaces the existing
+            one. It's written by <code>auditLogMiddleware</code> on
+            <strong>every</strong> REST request (not just mutations), and is the
+            data source for the new Activity page.
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>Type</th>
+                <th>Source</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>id</code></td>
+                <td>TEXT (UUID)</td>
+                <td>generated</td>
+                <td>Primary key</td>
+              </tr>
+              <tr>
+                <td><code>user_id</code></td>
+                <td>TEXT</td>
+                <td><code>token.sub</code></td>
+                <td>
+                  Whose expense / data this action concerns — always the human,
+                  never the agent
+                </td>
+              </tr>
+              <tr>
+                <td><code>actor_type</code></td>
+                <td>TEXT — <code>'user' | 'agent'</code></td>
+                <td>derived: <code>token.act</code> present?</td>
+                <td>Direct UI/API access vs. MCP-delegated access</td>
+              </tr>
+              <tr>
+                <td><code>actor_client_id</code></td>
+                <td>TEXT, nullable</td>
+                <td><code>token.act.sub</code></td>
+                <td>
+                  Which OAuth client acted (the MCP server's
+                  <code>client_id</code>) — null when
+                  <code>actor_type='user'</code>
+                </td>
+              </tr>
+              <tr>
+                <td><code>action</code></td>
+                <td>TEXT</td>
+                <td>derived from route + method</td>
+                <td>
+                  e.g. <code>submit_expense</code>,
+                  <code>approve_expense</code>, <code>list_my_expenses</code> —
+                  same vocabulary as MCP tool names
+                </td>
+              </tr>
+              <tr>
+                <td><code>resource_type</code></td>
+                <td>TEXT</td>
+                <td>derived from route</td>
+                <td>e.g. <code>expense</code>, <code>report</code></td>
+              </tr>
+              <tr>
+                <td><code>resource_id</code></td>
+                <td>TEXT, nullable</td>
+                <td>route param or response body</td>
+                <td>The specific expense/report ID affected, if any</td>
+              </tr>
+              <tr>
+                <td><code>scope_used</code></td>
+                <td>TEXT</td>
+                <td><code>token.scp</code></td>
+                <td>
+                  Exactly which scope authorized this call — useful to show
+                  "approved using expense:approve, granted via token exchange"
+                </td>
+              </tr>
+              <tr>
+                <td><code>status_code</code></td>
+                <td>INTEGER</td>
+                <td>response</td>
+                <td>
+                  200/201/4xx — lets the Activity page show failed/denied
+                  attempts too
+                </td>
+              </tr>
+              <tr>
+                <td><code>created_at</code></td>
+                <td>TEXT (ISO 8601)</td>
+                <td>generated</td>
+                <td>When the action occurred</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin: 24px 0 14px;
+            "
+          >
+            Visibility rules (mirrors expense visibility)
+          </h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Caller role</th>
+                <th>Audit rows visible</th>
+                <th>Query shape</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge green">employee</span></td>
+                <td>
+                  Own actions only — both their own direct actions and anything
+                  an agent did on their behalf
+                </td>
+                <td><code>WHERE user_id = :callerSub</code></td>
+              </tr>
+              <tr>
+                <td><span class="badge blue">manager</span></td>
+                <td>Own actions + actions belonging to direct reports</td>
+                <td>
+                  <code>WHERE user_id IN (:callerSub, ...directReportIds)</code>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="badge yellow">finance_admin</span></td>
+                <td>Everyone's actions, system-wide</td>
+                <td><code>WHERE 1=1</code> (no filter)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="callout info" style="margin-top: 20px">
+            <div class="callout-icon">ℹ️</div>
+            <div>
+              This mirrors exactly how <code>expense:view:own</code> /
+              <code>expense:view:team</code> /
+              <code>expense:view:all</code> already gate expense visibility —
+              the Activity endpoint reuses those same scopes rather than
+              introducing a new <code>activity:view:*</code>
+              scope family, keeping the scope surface small for the demo.
+            </div>
+          </div>
+        </div>
+
+        <!-- React App & Activity Page -->
+        <div class="section" id="react-app">
+          <div class="section-label">Frontend</div>
+          <h2>React App & Activity Page</h2>
+          <div class="section-sub">
+            A full React client for the REST API — the human-facing counterpart
+            to the MCP agent path. Calling the same REST API both ways (browser
+            → direct token, agent → exchanged token) is what makes the Activity
+            page's "who really did this" distinction demonstrable end-to-end.
+          </div>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin-bottom: 14px;
+            "
+          >
+            Pages
+          </h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Page</th>
+                <th>Calls</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Login</strong></td>
+                <td>LoginRadius Authorization Code + PKCE</td>
+                <td>
+                  User obtains a token with
+                  <code>aud=https://rest.server</code> directly —
+                  <strong>not</strong> via MCP. This is the "direct" path the
+                  Activity page contrasts against agent actions.
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Submit Expense</strong></td>
+                <td><code>POST /api/expenses</code></td>
+                <td>Form → REST call with the user's own browser-held token</td>
+              </tr>
+              <tr>
+                <td><strong>My Expenses</strong></td>
+                <td><code>GET /api/expenses/me</code></td>
+                <td>Table with status filter, pagination</td>
+              </tr>
+              <tr>
+                <td><strong>Team Expenses</strong></td>
+                <td><code>GET /api/expenses/team/:teamId</code></td>
+                <td>
+                  Visible to manager+ only — hide nav item otherwise based on
+                  role claim
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Approve / Reject</strong></td>
+                <td>
+                  <code>POST /api/expenses/:id/approve</code> /
+                  <code>reject</code>
+                </td>
+                <td>Inline actions from the team expenses table</td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>Activity</strong> <span class="badge teal">NEW</span>
+                </td>
+                <td><code>GET /api/activity</code></td>
+                <td>The centerpiece — see below</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin: 28px 0 14px;
+            "
+          >
+            Activity page — design
+          </h3>
+          <div class="section-sub" style="margin-bottom: 16px">
+            A table of audit log rows, scoped to what the logged-in user is
+            allowed to see (own / team / all, same tiers as expenses). The key
+            visual element: a column that makes the direct-vs-delegated
+            distinction immediately legible.
+          </div>
+
+          <div class="audit-grid">
+            <div class="audit-card">
+              <h4>🧑 Row rendering — Direct (actor_type = 'user')</h4>
+              <p>
+                Rendered with a plain "You" or the user's name, no extra badge.
+                This is the default, unremarkable case — someone used the web
+                app themselves.
+              </p>
+              <pre><span class="key">"Bob approved expense #4821"</span>
+<span class="cmt">via Web App · scope: expense:approve</span></pre>
+            </div>
+            <div class="audit-card">
+              <h4>🤖 Row rendering — Delegated (actor_type = 'agent')</h4>
+              <p>
+                Rendered with a distinct badge showing which MCP client acted —
+                resolved from <code>actor_client_id</code> to a friendly name
+                (e.g. "Claude Desktop") via a small lookup table keyed by
+                <code>client_id</code>, since LR doesn't return a display name
+                in the token itself.
+              </p>
+              <pre><span class="key">"Bob approved expense #4821"</span>
+<span class="cmt">via 🤖 Claude Desktop (on Bob's behalf) · scope: expense:approve</span></pre>
+            </div>
+          </div>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin: 28px 0 14px;
+            "
+          >
+            Suggested columns
+          </h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Timestamp</td>
+                <td><code>created_at</code></td>
+              </tr>
+              <tr>
+                <td>User</td>
+                <td><code>user_id</code> → resolved name</td>
+              </tr>
+              <tr>
+                <td>Action</td>
+                <td><code>action</code> (e.g. "Approved expense")</td>
+              </tr>
+              <tr>
+                <td>Resource</td>
+                <td>
+                  <code>resource_type</code> + <code>resource_id</code>, linked
+                  to the expense detail
+                </td>
+              </tr>
+              <tr>
+                <td>Performed via</td>
+                <td>
+                  Badge: <strong>Web App</strong> if
+                  <code>actor_type='user'</code>, or
+                  <strong>🤖 &lt;client name&gt;</strong> if
+                  <code>actor_type='agent'</code>
+                </td>
+              </tr>
+              <tr>
+                <td>Scope used</td>
+                <td>
+                  <code>scope_used</code> — shown on hover/expand, e.g.
+                  <code>expense:approve</code>
+                </td>
+              </tr>
+              <tr>
+                <td>Result</td>
+                <td>
+                  <code>status_code</code> → "Success" / "Denied" / "Failed"
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin: 28px 0 14px;
+            "
+          >
+            Filters
+          </h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Filter</th>
+                <th>Maps to</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Performed via: Web App / AI Agent / All</td>
+                <td><code>actorType</code> query param</td>
+              </tr>
+              <tr>
+                <td>Action type</td>
+                <td>
+                  <code>action</code> query param — dropdown sourced from
+                  distinct actions
+                </td>
+              </tr>
+              <tr>
+                <td>Date range</td>
+                <td><code>fromDate</code> / <code>toDate</code></td>
+              </tr>
+              <tr>
+                <td>Scope: own / team / everyone</td>
+                <td>
+                  Not a query param — server derives the ceiling from the
+                  caller's role automatically, same as expense list endpoints
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="callout teal" style="margin-top: 24px">
+            <div class="callout-icon">🎬</div>
+            <div>
+              <strong>This is the demo's payoff screen.</strong> A manager
+              approves one expense by clicking a button in the React app, then
+              asks Claude Desktop to approve another. Both show up in Activity —
+              one tagged "Web App," the other "🤖 Claude Desktop (on Bob's
+              behalf)." Same user, same action type, same REST endpoint, two
+              different authorization paths, both fully auditable.
+            </div>
+          </div>
+        </div>
+
+        <!-- RFC 8693 Reference -->
+        <div class="section" id="rfc8693">
+          <div class="section-label">Specification Reference</div>
+          <h2>RFC 8693 — OAuth 2.0 Token Exchange</h2>
+          <div class="section-sub">
+            <a
+              href="https://www.rfc-editor.org/rfc/rfc8693.html"
+              style="color: var(--teal)"
+              >rfc-editor.org/rfc/rfc8693</a
+            >
+            — the parts of the spec this implementation relies on, summarized
+            for reference while building.
+          </div>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin-bottom: 12px;
+            "
+          >
+            §1.1 — Delegation vs. Impersonation
+          </h3>
+          <p
+            style="
+              font-size: 13px;
+              color: var(--text-muted);
+              line-height: 1.75;
+              margin-bottom: 16px;
+            "
+          >
+            This is the section that determines our entire design. The RFC
+            defines two distinct modes for a token exchange, and the difference
+            is solely whether an <code>actor_token</code> is presented:
+          </p>
+          <table class="data-table" style="margin-bottom: 20px">
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>Request shape</th>
+                <th>Resulting token</th>
+                <th>Used here?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Impersonation</strong></td>
+                <td><code>subject_token</code> only</td>
+                <td>
+                  <code>sub</code> = original user.
+                  <strong>No <code>act</code> claim</strong> — indistinguishable
+                  from a token the user obtained themselves
+                </td>
+                <td>
+                  <span class="badge red">NOT used</span> — would erase the
+                  audit signal we need
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Delegation</strong></td>
+                <td><code>subject_token</code> + <code>actor_token</code></td>
+                <td>
+                  <code>sub</code> = original user, <code>act.sub</code> = actor
+                  (MCP server)
+                </td>
+                <td>
+                  <span class="badge teal">Used</span> — exactly what powers the
+                  Activity page
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin: 24px 0 12px;
+            "
+          >
+            §2.1 — Request Parameters
+          </h3>
+          <table class="data-table" style="margin-bottom: 20px">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Required?</th>
+                <th>What we send</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>grant_type</code></td>
+                <td>required</td>
+                <td>
+                  <code>urn:ietf:params:oauth:grant-type:token-exchange</code>
+                </td>
+              </tr>
+              <tr>
+                <td><code>resource</code></td>
+                <td>optional (RFC 8707)</td>
+                <td>
+                  <code>https://rest.server</code> — selects the target
+                  resource/audience
+                </td>
+              </tr>
+              <tr>
+                <td><code>scope</code></td>
+                <td>optional</td>
+                <td>The single fine-grained scope this tool call needs</td>
+              </tr>
+              <tr>
+                <td><code>requested_token_type</code></td>
+                <td>optional</td>
+                <td>
+                  <code>urn:ietf:params:oauth:token-type:access_token</code>
+                </td>
+              </tr>
+              <tr>
+                <td><code>subject_token</code></td>
+                <td><strong>required</strong></td>
+                <td>
+                  The user's MCP token, taken from the inbound request header
+                </td>
+              </tr>
+              <tr>
+                <td><code>subject_token_type</code></td>
+                <td><strong>required</strong></td>
+                <td>
+                  <code>urn:ietf:params:oauth:token-type:access_token</code>
+                </td>
+              </tr>
+              <tr>
+                <td><code>actor_token</code></td>
+                <td>optional — <strong>required for delegation</strong></td>
+                <td>
+                  The MCP server's own M2M token, obtained via
+                  <code>client_credentials</code>
+                </td>
+              </tr>
+              <tr>
+                <td><code>actor_token_type</code></td>
+                <td>required if <code>actor_token</code> present</td>
+                <td>
+                  <code>urn:ietf:params:oauth:token-type:access_token</code>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin: 24px 0 12px;
+            "
+          >
+            §2.1.1 — Relationship between Resource, Audience, and Scope
+          </h3>
+          <p
+            style="
+              font-size: 13px;
+              color: var(--text-muted);
+              line-height: 1.75;
+              margin-bottom: 16px;
+            "
+          >
+            The RFC treats <code>resource</code> and <code>audience</code> as
+            ways to indicate the target service, and <code>scope</code> as the
+            permissions requested on it. Our use is the straightforward case:
+            one <code>resource</code> value (<code>https://rest.server</code>)
+            per call, with exactly one fine-grained <code>scope</code> matched
+            to the MCP tool being executed — never a broader set than the tool
+            needs, and never broader than what the subject user's role permits.
+          </p>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin: 24px 0 12px;
+            "
+          >
+            §4.1 — "act" (Actor) Claim
+          </h3>
+          <p
+            style="
+              font-size: 13px;
+              color: var(--text-muted);
+              line-height: 1.75;
+              margin-bottom: 12px;
+            "
+          >
+            Defines the JWT claim our entire audit trail depends on. Quoting the
+            relevant mechanics:
+          </p>
+          <ul
+            style="
+              padding-left: 20px;
+              font-size: 13px;
+              color: var(--text-muted);
+              line-height: 1.9;
+              margin-bottom: 16px;
+            "
+          >
+            <li>
+              The <code>act</code> claim is a JSON object whose
+              <code>sub</code> member identifies the acting party
+            </li>
+            <li>
+              The <code>sub</code> of the issued token matches the
+              <code>subject_token</code>'s subject — identity of the user is
+              preserved
+            </li>
+            <li>
+              The <code>act.sub</code> of the issued token matches the
+              <code>actor_token</code>'s subject — identity of the delegate (our
+              MCP server) is recorded
+            </li>
+            <li>
+              Nested <code>act</code> claims are possible (<code>act.act</code>)
+              to represent a multi-hop delegation chain — not needed in this
+              architecture since there's only one hop (MCP server → REST API),
+              but worth knowing if a future hop is ever added (e.g. MCP server
+              delegating further to a sub-agent)
+            </li>
+          </ul>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin: 24px 0 12px;
+            "
+          >
+            §4.3 — "client_id" Claim
+          </h3>
+          <p
+            style="
+              font-size: 13px;
+              color: var(--text-muted);
+              line-height: 1.75;
+              margin-bottom: 16px;
+            "
+          >
+            Identifies which OAuth client performed the exchange. Since this
+            demo uses a single shared client for both the MCP server and the
+            original user-facing app, this claim is less informative here than
+            <code>act.sub</code> — but it's worth validating it matches the
+            expected client during REST API token validation, as a
+            defense-in-depth check against a stolen client secret being used
+            from an unexpected context.
+          </p>
+
+          <h3
+            style="
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--text);
+              margin: 24px 0 12px;
+            "
+          >
+            §5 — Security Considerations (selected)
+          </h3>
+          <ul
+            style="
+              padding-left: 20px;
+              font-size: 13px;
+              color: var(--text-muted);
+              line-height: 1.9;
+              margin-bottom: 8px;
+            "
+          >
+            <li>
+              <strong>Token replay:</strong> exchanged tokens should have short
+              lifetimes (this design uses ~300s) since a new one is minted per
+              tool call anyway
+            </li>
+            <li>
+              <strong>Audience restriction:</strong> the REST API must reject
+              tokens not specifically issued for
+              <code>https://rest.server</code> — this is the
+              <code>aud</code> check in <code>authMiddleware</code>
+            </li>
+            <li>
+              <strong>Scope downscoping:</strong> the authorization server, not
+              the requesting client, has final say over whether a requested
+              scope is granted — LR must enforce that the subject user's role
+              actually permits the scope the MCP server is requesting, even
+              though the MCP server is the one asking
+            </li>
+            <li>
+              <strong>Confidential client only:</strong> token exchange should
+              only be available to confidential clients (ones holding a
+              <code>client_secret</code>) — the MCP server qualifies since it
+              runs server-side and never exposes its secret to the MCP client
+              (Claude Desktop)
+            </li>
+          </ul>
+
+          <div class="callout warn" style="margin-top: 20px">
+            <div class="callout-icon">⚠️</div>
+            <div>
+              This summary is for implementation reference and omits sections
+              not relevant to this architecture (SAML token types, JWT-SVID,
+              impersonation-only flows). Always confirm exact behavior against
+              LoginRadius's own token exchange documentation, since RFC 8693
+              leaves some policy decisions — like exactly how scope downscoping
+              is enforced — to the implementing AS.
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div
+          style="
+            margin-top: 64px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+          "
+        >
+          <span
+            >Expense Server v2 · MCP Auth + RFC 8693 Token Exchange ·
+            LoginRadius AS</span
+          >
+          <span style="font-family: var(--mono)"
+            >mcp.server · rest.server · localhost:3001</span
+          >
+        </div>
+      </main>
+    </div>
+
+    <script>
+      function toggle(header) {
+        const body = header.nextElementSibling;
+        const icon = header.querySelector(".change-expand");
+        body.classList.toggle("open");
+        icon.textContent = body.classList.contains("open") ? "▲" : "▼";
+      }
+
+      // Highlight active nav link based on scroll
+      const sections = document.querySelectorAll(".section[id], .hero[id]");
+      const navLinks = document.querySelectorAll("nav a");
+
+      function updateActive() {
+        let current = "";
+        sections.forEach((s) => {
+          if (window.scrollY >= s.offsetTop - 80) current = s.id;
+        });
+        navLinks.forEach((a) => {
+          a.classList.toggle(
+            "active",
+            a.getAttribute("href") === "#" + current,
+          );
+        });
+      }
+
+      window.addEventListener("scroll", updateActive, { passive: true });
+      updateActive();
+    </script>
+  </body>
+</html>

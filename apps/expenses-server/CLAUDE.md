@@ -1,13 +1,13 @@
 # Expense Management Server
 
-A combined MCP + REST API server for expense management with Scalekit authentication.
+A combined MCP + REST API server for expense management with LoginRadius authentication.
 
 ## Features
 
 - **MCP Server** at `/mcp` - For AI agent integration
 - **REST API** at `/api` - For traditional clients
 - **SQLite Database** - Zero configuration, file-based
-- **Scalekit Auth** - JWT validation and RBAC
+- **LoginRadius Auth** - JWT validation (OIDC/JWKS) and RBAC
 
 ## Quick Start
 
@@ -17,7 +17,7 @@ A combined MCP + REST API server for expense management with Scalekit authentica
    cp .env.example .env
    ```
 
-2. Fill in your Scalekit credentials in `.env`
+2. Fill in your LoginRadius credentials in `.env`
 
 3. Install dependencies:
 
@@ -53,12 +53,13 @@ A combined MCP + REST API server for expense management with Scalekit authentica
 
 ### MCP Tools (`/mcp`)
 
+- `who_am_i` - Get current user's profile
 - `submit_expense` - Submit a new expense
 - `list_my_expenses` - List user's own expenses
 - `list_team_expenses` - List team expenses (managers)
 - `approve_expense` - Approve an expense
 - `reject_expense` - Reject an expense
-- `generate_expense_report` - Generate expense report (finance)
+- `generate_report` - Generate expense report (finance)
 
 ## User Roles
 
