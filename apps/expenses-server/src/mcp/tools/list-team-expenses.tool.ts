@@ -1,22 +1,10 @@
-// =============================================================================
-// MCP Tool: List Team Expenses
-// =============================================================================
-// Allows managers to view expenses submitted by their team members
-// Required Scope: expense:view:team
-// =============================================================================
-
 import { defineTool } from "../define-tool.js";
 import { z } from "zod";
-import { expenseService } from "../../services/expense.service.js";
-import { userRepository } from "../../db/repositories/index.js";
-import { MCP_SCOPES } from "../provider.js";
 import { createTextResponse, createErrorResponse } from "../types.js";
-import { ExpenseStatus } from "../../config/constants.js";
-import { deriveRolesFromScopes } from "../../middleware/rbac.middleware.js";
+import { ExpenseStatus, McpScopes } from "../../config/constants.js";
+import { exchangeToken, TokenExchangeError } from "../../utils/tokenExchange.js";
+import { callRest, RestError } from "../../utils/restClient.js";
 
-/**
- * Input schema for list_team_expenses tool
- */
 const listTeamExpensesInput = {
   team_id: z
     .string()
@@ -68,12 +56,6 @@ const listTeamExpensesInput = {
     .describe("Number of results per page (1-100)"),
 };
 
-/**
- * List Team Expenses Tool
- *
- * @scope expense:view:team
- * @rbac Only managers and finance_admins can use this tool
- */
 export const listTeamExpensesTool = defineTool({
   name: "list_team_expenses",
 
@@ -90,113 +72,38 @@ Note: You can only view expenses from users who report to you directly (your tea
 
   input: listTeamExpensesInput as any,
 
-  scopes: [MCP_SCOPES.EXPENSE_VIEW_TEAM],
+  scopes: [],
 
   handler: async (args, extra) => {
     try {
-      const userId = extra.authInfo.clientId;
+      const teamId = args.team_id ?? extra.authInfo.clientId;
 
-      if (!userId) {
-        return createErrorResponse("Authentication required", {
-          code: "UNAUTHORIZED",
-        });
-      }
+      const qs = new URLSearchParams();
+      if (args.status?.length) qs.set("status", args.status.join(","));
+      if (args.from_date) qs.set("fromDate", args.from_date);
+      if (args.to_date) qs.set("toDate", args.to_date);
+      if (args.submitter_id) qs.set("submitterId", args.submitter_id);
+      qs.set("page", String(args.page ?? 1));
+      qs.set("limit", String(args.limit ?? 20));
 
-      // Get user to check role
-      const user = userRepository.findById(userId);
-
-      if (!user) {
-        return createErrorResponse("User not found", {
-          code: "NOT_FOUND",
-        });
-      }
-
-      const roles =
-        extra.authInfo.roles ?? deriveRolesFromScopes(extra.authInfo.scopes);
-
-      const department = args.team_id;
-
-      const filters = {
-        status: args.status,
-        fromDate: args.from_date,
-        toDate: args.to_date,
-        submitterId: args.submitter_id,
-        page: args.page || 1,
-        limit: args.limit || 20,
-      };
-
-      // Construct AuthenticatedUser
-      const authUser = {
-        userId: user.userId,
-        email: user.email,
-        fullName: user.fullName,
-        roles,
-        scopes: extra.authInfo.scopes,
-        department: user.department || "General",
-      };
-
-      // Call service layer
-      const result = await expenseService.getTeamExpenses(
-        authUser as any,
-        department,
-        filters,
+      const restToken = await exchangeToken(
+        extra.authInfo.token,
+        McpScopes.EXPENSE_VIEW_TEAM,
       );
-
-      return createTextResponse({
-        success: true,
-        data: {
-          team_name: department || "All Teams",
-          expenses: result.expenses.map((expense) => ({
-            expense_id: expense.expenseId,
-            submitter: {
-              user_id: expense.submitter.userId,
-              full_name: expense.submitter.fullName,
-              email: expense.submitter.email,
-            },
-            category: expense.categoryName,
-            amount: expense.amount,
-            currency: expense.currency,
-            description: expense.description,
-            expense_date: expense.expenseDate,
-            receipt_url: expense.receiptUrl,
-            status: expense.status,
-            submitted_at: expense.submittedAt,
-          })),
-          pagination: {
-            current_page: result.pagination.currentPage,
-            total_pages: result.pagination.totalPages,
-            total_items: result.pagination.totalItems,
-            items_per_page: result.pagination.itemsPerPage,
-          },
-          summary: {
-            total_amount: result.summary.totalAmount,
-            pending_amount: result.summary.pendingAmount,
-            approved_amount: result.summary.approvedAmount,
-            // expense_count is available as total_items in pagination
-          },
-        },
-      });
+      const data = await callRest(
+        restToken,
+        "GET",
+        `/api/expenses/team/${teamId}?${qs.toString()}`,
+      );
+      return createTextResponse({ success: true, data });
     } catch (error) {
-      if (error instanceof Error) {
-        if (
-          error.message.includes("not authorized") ||
-          error.message.includes("permission")
-        ) {
-          return createErrorResponse("Access denied", {
-            code: "FORBIDDEN",
-            message: error.message,
-          });
-        }
-
-        return createErrorResponse("Failed to fetch team expenses", {
-          code: "INTERNAL_ERROR",
-          message: error.message,
-        });
+      if (error instanceof RestError) {
+        return createErrorResponse(error.message, { status: error.status });
       }
-
-      return createErrorResponse("An unexpected error occurred", {
-        code: "INTERNAL_ERROR",
-      });
+      if (error instanceof TokenExchangeError) {
+        return createErrorResponse(error.message);
+      }
+      return createErrorResponse("An unexpected error occurred");
     }
   },
 });

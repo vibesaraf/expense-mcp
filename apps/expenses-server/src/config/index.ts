@@ -20,22 +20,39 @@ const envSchema = z.object({
   LR_TOKEN_ENDPOINT_AUTH_METHOD: z
     .enum(["client_secret_post", "client_secret_basic"])
     .default("client_secret_post"),
+  LR_TOKEN_ENDPOINT: z.string().url(),
+  LR_AUTHORIZE_URL: z.string().url(),
+  LR_OIDC_TOKEN_ENDPOINT: z.string().url(),
 
   // MCP
   MCP_RESOURCE_URL: z.string().url(),
   PROTECTED_RESOURCE_METADATA: z
     .string()
     .min(1, "PROTECTED_RESOURCE_METADATA is required"),
-
-  // MCP
   MCP_SERVER_NAME: z.string().default("Expense Management MCP Server"),
   MCP_SERVER_VERSION: z.string().default("1.0.0"),
+  MCP_SERVER_ACTOR_SCOPES: z
+    .string()
+    .default(
+      "expense:submit expense:view:own expense:view:team expense:view:all expense:approve expense:report:generate",
+    ),
+
+  // REST resource (target audience for REST API tokens)
+  REST_RESOURCE_URL: z.string().url().default("http://localhost:3001"),
+  REST_BASE_URL: z.string().url().default("http://localhost:3001"),
+
+  // OIDC callback (React auth flow)
+  OIDC_REDIRECT_URI: z.string().url(),
+
+  // Cookie
+  COOKIE_NAME: z.string().default("expense_session"),
 
   // CORS
   CORS_ORIGIN: z.string().default("*"),
 });
 
-export type Config = z.infer<typeof envSchema>;
+type EnvConfig = z.infer<typeof envSchema>;
+export type Config = EnvConfig & { COOKIE_SECURE: boolean };
 
 function loadConfig(): Config {
   const result = envSchema.safeParse(process.env);
@@ -46,7 +63,10 @@ function loadConfig(): Config {
     process.exit(1);
   }
 
-  return result.data;
+  return {
+    ...result.data,
+    COOKIE_SECURE: result.data.NODE_ENV === "production",
+  };
 }
 
 export const config = loadConfig();

@@ -3,11 +3,12 @@ import express, { type Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 
 import { config } from "./config/index.js";
 import { createMcpRouter } from "./mcp/index.js";
 import { apiRouter } from "./api/index.js";
-import { wellKnownRouter } from "./api/routes/index.js";
+import { wellKnownRouter, oidcRouter } from "./api/routes/index.js";
 import { errorHandler, notFoundHandler } from "./middleware/index.js";
 import { isDatabaseInitialized, getDb } from "./db/index.js";
 import { createTables } from "./db/schema.js";
@@ -16,7 +17,7 @@ import { createTables } from "./db/schema.js";
 if (!isDatabaseInitialized()) {
   console.log("📦 Initializing database...");
   createTables();
-  console.log("💡 Run `bun run db:seed` to populate with sample data");
+  console.log("💡 Run `pnpm run db:seed` to populate with sample data");
 } else {
   // Verify database connection
   const db = getDb();
@@ -55,6 +56,7 @@ app.use(
 // ===================
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // ===================
 // Request Logging
@@ -78,6 +80,7 @@ app.get("/health", (_req, res) => {
 // OAuth Metadata (public)
 // ===================
 app.use(wellKnownRouter);
+console.log("crossed well known");
 
 // ===================
 // MCP Server Endpoint
@@ -86,6 +89,11 @@ app.use(wellKnownRouter);
 // - POST /mcp - MCP protocol endpoint (requires Bearer token)
 // - GET /.well-known/oauth-authorization-server - Auth server metadata (if supported)
 app.use(createMcpRouter());
+
+// ===================
+// OIDC Endpoints (public — no auth)
+// ===================
+app.use("/oidc", oidcRouter);
 
 // ===================
 // REST API Endpoints

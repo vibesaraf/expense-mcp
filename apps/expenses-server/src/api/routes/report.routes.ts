@@ -3,7 +3,6 @@ import { reportController } from '../controllers/index.js';
 import {
     authMiddleware,
     requireScopes,
-    auditMiddleware
 } from '../../middleware/index.js';
 import { McpScopes } from '../../config/constants.js';
 
@@ -19,7 +18,6 @@ router.use(authMiddleware);
 router.post(
     '/generate',
     requireScopes(McpScopes.EXPENSE_REPORT_GENERATE),
-    auditMiddleware('report:generate', 'report'),
     reportController.generateReport.bind(reportController)
 );
 

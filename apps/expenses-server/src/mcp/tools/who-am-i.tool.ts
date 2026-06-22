@@ -1,20 +1,9 @@
-// =============================================================================
-// MCP Tool: Who Am I
-// =============================================================================
-// Returns the authenticated user's profile information
-// Required Scope: none (any authenticated user)
-// =============================================================================
-
 import { defineTool } from "../define-tool.js";
-import { userRepository } from "../../db/repositories/index.js";
 import { createTextResponse, createErrorResponse } from "../types.js";
+import { exchangeToken, TokenExchangeError } from "../../utils/tokenExchange.js";
+import { callRest, RestError } from "../../utils/restClient.js";
+import { McpScopes } from "../../config/constants.js";
 
-/**
- * Who Am I Tool
- *
- * @scope none — any authenticated user
- * @rbac any authenticated user
- */
 export const whoAmITool = defineTool({
   name: "who_am_i",
 
@@ -34,42 +23,20 @@ Use this tool to confirm your identity and see your organizational context.`,
 
   handler: async (_args, extra) => {
     try {
-      const userId = extra.authInfo.clientId
-
-      if (!userId) {
-        return createErrorResponse("Authentication required", {
-          code: "UNAUTHORIZED",
-        })
-      }
-
-      const user = userRepository.findById(userId)
-      if (!user) {
-        return createErrorResponse("User not found", {
-          code: "NOT_FOUND",
-        })
-      }
-
-      const manager = user.managerId
-        ? userRepository.findById(user.managerId)
-        : null
-
-      return createTextResponse({
-        name: user.fullName,
-        email: user.email,
-        department: user.department ?? null,
-        manager: manager ? manager.fullName : null,
-      })
+      const restToken = await exchangeToken(
+        extra.authInfo.token,
+        McpScopes.EXPENSE_VIEW_OWN,
+      );
+      const data = await callRest(restToken, "GET", "/api/users/me");
+      return createTextResponse(data);
     } catch (error) {
-      if (error instanceof Error) {
-        return createErrorResponse("Failed to fetch user information", {
-          code: "INTERNAL_ERROR",
-          message: error.message,
-        })
+      if (error instanceof RestError) {
+        return createErrorResponse(error.message, { status: error.status });
       }
-
-      return createErrorResponse("An unexpected error occurred", {
-        code: "INTERNAL_ERROR",
-      })
+      if (error instanceof TokenExchangeError) {
+        return createErrorResponse(error.message);
+      }
+      return createErrorResponse("An unexpected error occurred");
     }
   },
-})
+});

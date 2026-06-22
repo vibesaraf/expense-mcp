@@ -3,7 +3,6 @@ import {
   categoryRepository,
   userRepository,
   approvalRepository,
-  auditRepository,
   type ExpenseFilters,
 } from "../db/repositories/index.js";
 import type {
@@ -68,15 +67,6 @@ export class ExpenseService {
 
     // Create the expense
     const expense = expenseRepository.create(user.userId, input);
-
-    // Log audit
-    auditRepository.create({
-      userId: user.userId,
-      action: "expense:submit",
-      resourceType: "expense",
-      resourceId: expense.expenseId,
-      details: { amount: input.amount, categoryId: input.categoryId },
-    });
 
     return expenseRepository.findByIdWithSubmitter(expense.expenseId)!;
   }
@@ -191,16 +181,6 @@ export class ExpenseService {
     // Create approval record
     approvalRepository.create(expenseId, user.userId, "approved", notes);
 
-    // Log audit
-    auditRepository.create({
-      userId: user.userId,
-      action: "expense:approve",
-      resourceType: "expense",
-      resourceId: expenseId,
-      details: { notes },
-    });
-
-    // Return updated expense with history
     return this.getExpenseDetails(user, expenseId);
   }
 
@@ -239,16 +219,6 @@ export class ExpenseService {
     // Create rejection record
     approvalRepository.create(expenseId, user.userId, "rejected", reason);
 
-    // Log audit
-    auditRepository.create({
-      userId: user.userId,
-      action: "expense:reject",
-      resourceType: "expense",
-      resourceId: expenseId,
-      details: { reason },
-    });
-
-    // Return updated expense with history
     return this.getExpenseDetails(user, expenseId);
   }
 

@@ -123,33 +123,30 @@ export function createTables(): void {
   // Audit log table
   db.exec(`
     CREATE TABLE IF NOT EXISTS audit_log (
-      log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
+      actor_type TEXT NOT NULL CHECK (actor_type IN ('user', 'agent')),
+      actor_client_id TEXT,
       action TEXT NOT NULL,
       resource_type TEXT NOT NULL,
       resource_id TEXT,
-      details TEXT,
-      ip_address TEXT,
-      user_agent TEXT,
-      timestamp TEXT DEFAULT (datetime('now')),
+      scope_used TEXT,
+      status_code INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(user_id)
     )
   `);
 
-  // Create indexes for audit log
   db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_audit_user_action 
-    ON audit_log(user_id, action)
+    CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_log(user_id)
   `);
 
   db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_audit_timestamp 
-    ON audit_log(timestamp)
+    CREATE INDEX IF NOT EXISTS idx_audit_actor_type ON audit_log(actor_type)
   `);
 
   db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_audit_resource 
-    ON audit_log(resource_type, resource_id)
+    CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_log(created_at)
   `);
 
   console.log("✅ Database tables created successfully");

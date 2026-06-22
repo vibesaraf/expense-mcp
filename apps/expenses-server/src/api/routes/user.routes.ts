@@ -4,13 +4,14 @@ import { authMiddleware, requireFinanceAdmin } from "../../middleware/index.js";
 
 const router = Router();
 
-// User registration requires authentication and finance admin role
 router.use(authMiddleware);
+
+// GET /users/me — auth only, no role guard
+router.get("/me", userController.getMe.bind(userController));
+
+// Remaining routes require finance admin
 router.use(requireFinanceAdmin);
 
-/**
- * POST /users/register - Register a new user
- */
 router.post("/register", userController.registerUser.bind(userController));
 
 export const userRouter: Router = router;

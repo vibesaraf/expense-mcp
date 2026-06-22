@@ -1,7 +1,6 @@
 import {
   expenseRepository,
   userRepository,
-  auditRepository,
 } from "../db/repositories/index.js";
 import type { AuthenticatedUser } from "../types/auth.types.js";
 import type { ReportResponse, ExpenseListResponse } from "../types/api.types.js";
@@ -115,19 +114,6 @@ export class ReportService {
         expenseDate: exp.expenseDate,
       }));
     }
-
-    // Log audit
-    auditRepository.create({
-      userId: user.userId,
-      action: "report:generate",
-      resourceType: "report",
-      resourceId: reportId,
-      details: {
-        reportType: input.reportType,
-        period: { from: input.fromDate, to: input.toDate },
-        filters: { department: input.department, status: input.status },
-      },
-    });
 
     return report;
   }

@@ -10,4 +10,4 @@ export {
     isManagerOrHigher,
 } from './rbac.middleware.js';
 export { errorHandler, notFoundHandler } from './error.middleware.js';
-export { auditMiddleware } from './audit.middleware.js';
+export { auditLogMiddleware } from './auditLog.middleware.js';

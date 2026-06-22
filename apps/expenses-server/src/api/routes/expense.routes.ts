@@ -4,7 +4,6 @@ import {
     authMiddleware,
     requireScopes,
     requireAnyScope,
-    auditMiddleware
 } from '../../middleware/index.js';
 import { McpScopes } from '../../config/constants.js';
 
@@ -20,7 +19,6 @@ router.use(authMiddleware);
 router.post(
     '/',
     requireScopes(McpScopes.EXPENSE_SUBMIT),
-    auditMiddleware('expense:submit', 'expense'),
     expenseController.submitExpense.bind(expenseController)
 );
 
@@ -71,7 +69,6 @@ router.get(
 router.post(
     '/:expenseId/approve',
     requireScopes(McpScopes.EXPENSE_APPROVE),
-    auditMiddleware('expense:approve', 'expense'),
     expenseController.approveExpense.bind(expenseController)
 );
 
@@ -82,7 +79,6 @@ router.post(
 router.post(
     '/:expenseId/reject',
     requireScopes(McpScopes.EXPENSE_APPROVE),
-    auditMiddleware('expense:reject', 'expense'),
     expenseController.rejectExpense.bind(expenseController)
 );
 

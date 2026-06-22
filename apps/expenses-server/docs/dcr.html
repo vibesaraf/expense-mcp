@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MCP OAuth Authorization Flow — Interactive Simulator</title>
+    <style>
+      :root {
+        --bg: #f7f8fb;
+        --panel: #ffffff;
+        --ink: #1f2430;
+        --muted: #6b7280;
+        --line: #e6e8ee;
+        --accent: #3b6ef5;
+        --accent-soft: #eaf0ff;
+        --green: #1f9d6b;
+        --amber: #c9821a;
+        --code-bg: #1e2230;
+        --code-ink: #e8ecf5;
+        /* actor colors */
+        --ua: #7c4dff;
+        --client: #3b6ef5;
+        --mcp: #1f9d6b;
+        --as: #e0588b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      header {
+        padding: 28px 20px 22px;
+        text-align: center;
+        background: linear-gradient(180deg, #ffffff, #f7f8fb);
+        border-bottom: 1px solid var(--line);
+      }
+      header h1 {
+        margin: 0 0 6px;
+        font-size: 24px;
+        letter-spacing: -0.3px;
+      }
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      /* path toggle */
+      .toggle {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 18px 0 6px;
+      }
+      .toggle button {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--ink);
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .toggle button.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .path-desc {
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+        max-width: 680px;
+        margin: 6px auto 0;
+      }
+
+      /* legend */
+      .legend {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 18px 0 8px;
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+      .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 3px;
+        display: inline-block;
+      }
+
+      /* stage layout */
+      .stage {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+        margin-top: 14px;
+      }
+      @media (min-width: 860px) {
+        .stage {
+          grid-template-columns: 300px 1fr;
+        }
+      }
+
+      /* actors column */
+      .actors {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        position: sticky;
+        top: 12px;
+        align-self: start;
+      }
+      .actor {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        padding: 12px 14px;
+        transition: 0.18s;
+        opacity: 0.55;
+      }
+      .actor .role {
+        font-weight: 700;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .actor .sub {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .actor.lit {
+        opacity: 1;
+        box-shadow: 0 4px 18px rgba(40, 60, 120, 0.1);
+        transform: translateY(-1px);
+      }
+      .actor.lit.ua {
+        border-color: var(--ua);
+      }
+      .actor.lit.client {
+        border-color: var(--client);
+      }
+      .actor.lit.mcp {
+        border-color: var(--mcp);
+      }
+      .actor.lit.as {
+        border-color: var(--as);
+      }
+
+      /* step panel */
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 0;
+        overflow: hidden;
+        box-shadow: 0 2px 14px rgba(40, 60, 120, 0.05);
+      }
+      .panel-top {
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      .stepmeta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+      .pill {
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .stepcount {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: auto;
+      }
+      .flowline {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        flex-wrap: wrap;
+      }
+      .chip {
+        padding: 4px 10px;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 12px;
+      }
+      .chip.ua {
+        background: var(--ua);
+      }
+      .chip.client {
+        background: var(--client);
+      }
+      .chip.mcp {
+        background: var(--mcp);
+      }
+      .chip.as {
+        background: var(--as);
+      }
+      .chip.ext {
+        background: #8a94a6;
+      }
+      .arrow {
+        color: var(--muted);
+        font-size: 16px;
+      }
+      .panel-top h2 {
+        margin: 12px 0 6px;
+        font-size: 18px;
+        letter-spacing: -0.2px;
+      }
+      .panel-top p {
+        margin: 0;
+        color: var(--ink);
+        font-size: 14px;
+      }
+
+      .codebox {
+        background: var(--code-bg);
+        color: var(--code-ink);
+        padding: 16px 18px;
+        font-size: 12.6px;
+        font-family: "SF Mono", Menlo, Consolas, monospace;
+        overflow-x: auto;
+        white-space: pre;
+        line-height: 1.6;
+      }
+      .codebox .hl {
+        color: #ffd479;
+      }
+      .codebox .cm {
+        color: #7e8aa3;
+      }
+      .codebox .mute {
+        color: #9aa3b5;
+      }
+      .nocode {
+        padding: 14px 18px;
+        font-size: 13px;
+        color: var(--muted);
+        background: #fafbfd;
+        font-style: italic;
+      }
+
+      .why {
+        padding: 14px 20px 18px;
+        background: #fafbfd;
+        border-top: 1px solid var(--line);
+      }
+      .why b {
+        font-size: 12.5px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+      .why p {
+        margin: 5px 0 0;
+        font-size: 13.5px;
+        color: #444b59;
+      }
+
+      /* controls */
+      .controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        flex-wrap: wrap;
+      }
+      .controls .nav {
+        display: flex;
+        gap: 8px;
+      }
+      .controls button {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--ink);
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .controls button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .controls button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* progress dots */
+      .progress {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 16px 0 2px;
+      }
+      .progress i {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--line);
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .progress i.done {
+        background: #b9c6e8;
+      }
+      .progress i.now {
+        background: var(--accent);
+        transform: scale(1.35);
+      }
+
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        padding: 24px 20px 40px;
+      }
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .keyhint {
+        font-size: 11.5px;
+        color: var(--muted);
+        text-align: center;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>MCP OAuth Authorization — Interactive Flow</h1>
+      <p>
+        How an MCP client gets an access token, step by step · Spec revision
+        2025-11-25
+      </p>
+    </header>
+
+    <div class="wrap">
+      <div class="toggle">
+        <button id="btn-cimd" class="active" onclick="setPath('cimd')">
+          CIMD path
+        </button>
+        <button id="btn-dcr" onclick="setPath('dcr')">DCR path</button>
+      </div>
+      <p class="path-desc" id="pathDesc"></p>
+
+      <div class="legend">
+        <span
+          ><i class="dot" style="background: var(--ua)"></i>User-Agent
+          (Browser)</span
+        >
+        <span
+          ><i class="dot" style="background: var(--client)"></i>MCP Client</span
+        >
+        <span
+          ><i class="dot" style="background: var(--mcp)"></i>MCP Server
+          (Resource Server)</span
+        >
+        <span
+          ><i class="dot" style="background: var(--as)"></i>Authorization
+          Server</span
+        >
+      </div>
+
+      <div class="stage">
+        <div class="actors">
+          <div class="actor ua" id="a-ua">
+            <div class="role">
+              <span class="dot" style="background: var(--ua)"></span>User-Agent
+            </div>
+            <div class="sub">The user's web browser</div>
+          </div>
+          <div class="actor client" id="a-client">
+            <div class="role">
+              <span class="dot" style="background: var(--client)"></span>MCP
+              Client
+            </div>
+            <div class="sub">e.g. Claude, an IDE agent</div>
+          </div>
+          <div class="actor mcp" id="a-mcp">
+            <div class="role">
+              <span class="dot" style="background: var(--mcp)"></span>MCP Server
+            </div>
+            <div class="sub">OAuth 2.1 resource server</div>
+          </div>
+          <div class="actor as" id="a-as">
+            <div class="role">
+              <span class="dot" style="background: var(--as)"></span>Auth Server
+            </div>
+            <div class="sub">Issues access tokens</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-top">
+            <div class="stepmeta">
+              <span class="pill" id="phasePill">Discovery</span>
+              <span class="stepcount" id="stepCount"></span>
+            </div>
+            <div class="flowline" id="flowLine"></div>
+            <h2 id="stepTitle"></h2>
+            <p id="stepDesc"></p>
+          </div>
+          <div id="codeSlot"></div>
+          <div class="why">
+            <b>Why this step</b>
+            <p id="stepWhy"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress" id="progress"></div>
+
+      <div class="controls">
+        <div class="nav">
+          <button id="prevBtn" onclick="go(-1)">← Prev</button>
+          <button id="nextBtn" class="primary" onclick="go(1)">Next →</button>
+        </div>
+        <button onclick="reset()">↺ Restart</button>
+      </div>
+      <p class="keyhint">Tip: use ← and → arrow keys to move between steps</p>
+    </div>
+
+    <footer>
+      Built from the official MCP Authorization specification (revision
+      2025-11-25). Endpoints and request shapes follow OAuth 2.1, RFC 9728
+      (Protected Resource Metadata), RFC 8707 (Resource Indicators), RFC 7591
+      (DCR), and the Client ID Metadata Document draft.<br />
+      Source:
+      <a
+        href="https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization"
+        >modelcontextprotocol.io</a
+      >
+    </footer>
+
+    <script>
+      /* ---------- shared steps (discovery) used by both paths ---------- */
+      const c = (s) => s; // identity, kept for readability
+
+      const discovery = [
+        {
+          phase: "Discovery",
+          from: "client",
+          to: "mcp",
+          title: "Client tries the MCP server with no token",
+          desc: "The MCP client makes its first request to the server before it has any access token. It expects to be rejected — this is how it learns that auth is required.",
+          code: `<span class="cm"># MCP Client → MCP Server</span>
+POST /mcp HTTP/1.1
+Host: mcp.example.com
+Content-Type: application/json
+
+{"jsonrpc":"2.0","method":"tools/list","id":1}`,
+          why: "There's no upfront 'is auth needed?' call in OAuth. The client simply tries, and a 401 response tells it auth is required and where to look.",
+        },
+        {
+          phase: "Discovery",
+          from: "mcp",
+          to: "client",
+          title: "Server replies 401 and points to its metadata",
+          desc: "The MCP server returns 401 Unauthorized. The WWW-Authenticate header carries a resource_metadata URL (and optionally the scopes needed).",
+          code: `<span class="cm"># MCP Server → MCP Client</span>
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer
+  resource_metadata=<span class="hl">"https://mcp.example.com/.well-known/oauth-protected-resource"</span>,
+  scope="files:read"`,
+          why: "Per RFC 9728, the MCP server (a resource server) must advertise where its authorization server lives. The client must be able to parse this header.",
+        },
+        {
+          phase: "Discovery",
+          from: "client",
+          to: "mcp",
+          title: "Client fetches the Protected Resource Metadata",
+          desc: "The client requests the metadata document the header pointed to. This document names the authorization server(s) that issue tokens for this MCP server.",
+          code: `<span class="cm"># MCP Client → MCP Server</span>
+GET /.well-known/oauth-protected-resource HTTP/1.1
+Host: mcp.example.com
+
+<span class="cm"># Response body</span>
+{
+  "resource": <span class="hl">"https://mcp.example.com"</span>,
+  "authorization_servers": [<span class="hl">"https://auth.example.com"</span>],
+  "scopes_supported": ["files:read","files:write"]
+}`,
+          why: "This is the link between resource server and authorization server. The client now knows which AS to talk to, and what the canonical resource URI is for RFC 8707.",
+        },
+        {
+          phase: "Discovery",
+          from: "client",
+          to: "as",
+          title: "Client fetches the Authorization Server metadata",
+          desc: "The client probes the AS well-known endpoints (OAuth 2.0 metadata first, then OpenID Connect) to learn the authorization endpoint, token endpoint, PKCE support, and which registration methods are allowed.",
+          code: `<span class="cm"># MCP Client → Authorization Server</span>
+GET /.well-known/oauth-authorization-server HTTP/1.1
+Host: auth.example.com
+
+<span class="cm"># Response body</span>
+{
+  "issuer": "https://auth.example.com",
+  "authorization_endpoint": <span class="hl">"https://auth.example.com/authorize"</span>,
+  "token_endpoint": <span class="hl">"https://auth.example.com/token"</span>,
+  "code_challenge_methods_supported": ["S256"],
+  "client_id_metadata_document_supported": __CIMD_FLAG__,
+  "registration_endpoint": "__REG_EP__"
+}`,
+          why: "The client must confirm PKCE (S256) support here or it MUST refuse to proceed. It also reads the capability flags that decide the registration path: CIMD vs DCR vs pre-registration.",
+        },
+      ];
+
+      /* ---------- registration branch ---------- */
+      const regCIMD = [
+        {
+          phase: "Registration (CIMD)",
+          from: "ext",
+          to: "ext",
+          chips: ["client"],
+          title: "Client uses an HTTPS URL as its client_id",
+          desc: "With Client ID Metadata Documents there is no registration call. The client already hosts a JSON document about itself at a public HTTPS URL, and uses that URL directly as its client_id.",
+          code: `<span class="cm"># Hosted by the client at a public HTTPS URL</span>
+<span class="cm"># https://app.example.com/oauth/client.json</span>
+{
+  "client_id": <span class="hl">"https://app.example.com/oauth/client.json"</span>,
+  "client_name": "Example MCP Client",
+  "redirect_uris": ["http://localhost:3000/callback"],
+  "grant_types": ["authorization_code"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none"
+}`,
+          why: "This solves the core MCP problem: client and server usually have no prior relationship. The client_id URL is self-describing, so the AS can fetch and trust it on the fly — no registration round-trip.",
+        },
+      ];
+
+      const regDCR = [
+        {
+          phase: "Registration (DCR)",
+          from: "client",
+          to: "as",
+          title: "Client registers dynamically (POST /register)",
+          desc: "With Dynamic Client Registration the client posts its details to the AS registration endpoint and receives a freshly minted client_id in return.",
+          code: `<span class="cm"># MCP Client → Authorization Server (RFC 7591)</span>
+POST /register HTTP/1.1
+Host: auth.example.com
+Content-Type: application/json
+
+{
+  "client_name": "Example MCP Client",
+  "redirect_uris": ["http://localhost:3000/callback"],
+  "grant_types": ["authorization_code"],
+  "token_endpoint_auth_method": "none"
+}`,
+          why: "DCR lets an anonymous client obtain a client_id with no human involvement. As of 2025-11-25 it's kept mainly for backwards compatibility — CIMD is now preferred.",
+        },
+        {
+          phase: "Registration (DCR)",
+          from: "as",
+          to: "client",
+          title: "AS returns a generated client_id",
+          desc: "The authorization server creates a client record and returns the client_id the client will use for the rest of the flow.",
+          code: `<span class="cm"># Authorization Server → MCP Client</span>
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "client_id": <span class="hl">"s6BhdRkqt3"</span>,
+  "client_id_issued_at": 1718900000,
+  "redirect_uris": ["http://localhost:3000/callback"]
+}`,
+          why: "Now the client has an identity the AS recognizes. From here, the authorization-code flow is identical for both CIMD and DCR.",
+        },
+      ];
+
+      /* ---------- authorization-code flow (with a CIMD-only sub-step) ---------- */
+      const authShared1 = [
+        {
+          phase: "User Authorization",
+          from: "client",
+          to: "ua",
+          title: "Client builds the authorize URL and opens the browser",
+          desc: "The client generates PKCE values, picks scopes, includes the RFC 8707 resource parameter, and opens the user's browser at the AS authorization endpoint.",
+          code: `<span class="cm"># MCP Client → User-Agent (opens browser)</span>
+GET https://auth.example.com/authorize?
+  response_type=code
+  &client_id=__CLIENT_ID__
+  &redirect_uri=http://localhost:3000/callback
+  &scope=files:read
+  &state=<span class="mute">xyz-anti-csrf</span>
+  &resource=<span class="hl">https%3A%2F%2Fmcp.example.com</span>
+  &code_challenge=<span class="mute">E9Melhoa...</span>
+  &code_challenge_method=<span class="hl">S256</span>`,
+          why: "PKCE (S256) is mandatory — it stops a stolen authorization code from being redeemed by anyone else. The resource parameter binds the eventual token to this specific MCP server.",
+        },
+        {
+          phase: "User Authorization",
+          from: "ua",
+          to: "as",
+          title: "Browser sends the authorization request to the AS",
+          desc: "The user-agent follows the URL to the authorization server, carrying the resource parameter and PKCE challenge.",
+          code: `<span class="cm"># User-Agent → Authorization Server</span>
+GET /authorize?response_type=code&client_id=__CLIENT_ID__
+  &redirect_uri=http://localhost:3000/callback
+  &scope=files:read&state=xyz-anti-csrf
+  &resource=https%3A%2F%2Fmcp.example.com
+  &code_challenge=E9Melhoa...&code_challenge_method=S256 HTTP/1.1
+Host: auth.example.com`,
+          why: "The browser — not the client — talks to the AS for the user-facing part. This keeps the user's credentials away from the MCP client entirely.",
+        },
+      ];
+
+      const cimdFetch = {
+        phase: "User Authorization",
+        from: "as",
+        to: "ext",
+        chips: ["as", "client"],
+        title: "AS fetches the client's metadata document",
+        desc: "Because the client_id is an HTTPS URL, the AS fetches that URL to learn who the client is, then validates that the document's client_id matches the URL and that the redirect_uri is allowed.",
+        code: `<span class="cm"># Authorization Server → Client's metadata URL</span>
+GET /oauth/client.json HTTP/1.1
+Host: app.example.com
+
+<span class="cm"># AS validates:</span>
+<span class="cm">#  1. client_id in doc == the URL exactly</span>
+<span class="cm">#  2. redirect_uri is in the doc's allowed list</span>
+<span class="cm">#  3. document is well-formed JSON</span>`,
+        why: "This is the CIMD-specific step. The AS dereferences the client_id URL just-in-time instead of looking up a pre-registered record. It should guard against SSRF and cache the result.",
+      };
+
+      const authShared2 = [
+        {
+          phase: "User Authorization",
+          from: "as",
+          to: "ua",
+          title: "User logs in and approves the consent screen",
+          desc: "The authorization server authenticates the user (login) and shows a consent page naming the client and the requested scopes. The user approves.",
+          code: null,
+          why: "This is the only point a human is involved. The user sees the real client name and the exact permissions being granted, and makes the decision to allow or deny.",
+        },
+        {
+          phase: "User Authorization",
+          from: "as",
+          to: "ua",
+          title: "AS redirects back with an authorization code",
+          desc: "After approval the AS sends the browser back to the client's redirect URI, carrying a short-lived authorization code and the original state value.",
+          code: `<span class="cm"># Authorization Server → User-Agent (302 redirect)</span>
+HTTP/1.1 302 Found
+Location: http://localhost:3000/callback?
+  code=<span class="hl">SplxlOBeZQQYbYS6WxSbIA</span>
+  &state=xyz-anti-csrf`,
+          why: "The code is not the token. It's a one-time, short-lived voucher that only the original client — holding the PKCE verifier — can exchange. The client checks state matches to block CSRF.",
+        },
+        {
+          phase: "User Authorization",
+          from: "ua",
+          to: "client",
+          title: "Browser hands the code to the client",
+          desc: "The user-agent delivers the callback to the client's local redirect URI, passing the authorization code back into the MCP client.",
+          code: `<span class="cm"># User-Agent → MCP Client (local callback)</span>
+GET /callback?code=SplxlOBeZQQYbYS6WxSbIA
+  &state=xyz-anti-csrf HTTP/1.1
+Host: localhost:3000`,
+          why: "Redirect URIs must be localhost or HTTPS. The client confirms the returned state equals the one it sent before trusting the code.",
+        },
+        {
+          phase: "Token Issuance",
+          from: "client",
+          to: "as",
+          title: "Client exchanges the code for a token",
+          desc: "The client calls the token endpoint directly (back channel), sending the code, the PKCE code_verifier, and again the resource parameter.",
+          code: `<span class="cm"># MCP Client → Authorization Server</span>
+POST /token HTTP/1.1
+Host: auth.example.com
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&code=SplxlOBeZQQYbYS6WxSbIA
+&redirect_uri=http://localhost:3000/callback
+&client_id=__CLIENT_ID__
+&code_verifier=<span class="hl">dBjftJeZ4CVP-mB92K27uhbUJU1p1r...</span>
+&resource=<span class="hl">https%3A%2F%2Fmcp.example.com</span>`,
+          why: "The AS recomputes the challenge from the code_verifier and checks it matches what was sent in step one. Only the genuine client can pass this — that's PKCE doing its job.",
+        },
+        {
+          phase: "Token Issuance",
+          from: "as",
+          to: "client",
+          title: "AS issues the access token",
+          desc: "The authorization server returns an access token (and usually a refresh token). The token's audience is bound to the MCP server via the resource parameter.",
+          code: `<span class="cm"># Authorization Server → MCP Client</span>
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "access_token": <span class="hl">"eyJhbGciOiJIUzI1NiIs..."</span>,
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+  "scope": "files:read"
+}`,
+          why: "Tokens are short-lived to limit damage if leaked. The audience binding means this token works only at mcp.example.com — a different MCP server must reject it.",
+        },
+        {
+          phase: "Token Issuance",
+          from: "client",
+          to: "mcp",
+          title: "Client calls the MCP server with the token",
+          desc: "The client retries its original request, now sending the access token in the Authorization header on every request.",
+          code: `<span class="cm"># MCP Client → MCP Server</span>
+POST /mcp HTTP/1.1
+Host: mcp.example.com
+Authorization: <span class="hl">Bearer eyJhbGciOiJIUzI1NiIs...</span>
+Content-Type: application/json
+
+{"jsonrpc":"2.0","method":"tools/list","id":1}`,
+          why: "The token goes in the header, never the URL. It must be sent on every request, even within one session — MCP servers treat each HTTP request independently.",
+        },
+        {
+          phase: "Token Issuance",
+          from: "mcp",
+          to: "client",
+          title: "Server validates the token and responds",
+          desc: "The MCP server validates the token's signature, expiry, and — critically — that it was issued for this server as the audience. It then returns the real MCP response.",
+          code: `<span class="cm"># MCP Server → MCP Client</span>
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","id":1,"result":{
+  "tools":[{"name":"list_files"},{"name":"read_file"}]
+}}
+
+<span class="cm"># ✓ Authorized. MCP communication continues.</span>`,
+          why: "The server MUST confirm the token's audience is itself, and reject tokens issued for anyone else. This audience check is what stops token reuse across services.",
+        },
+      ];
+
+      /* ---------- assemble per-path sequences ---------- */
+      function buildSteps(path) {
+        const steps = JSON.parse(JSON.stringify(discovery));
+        if (path === "cimd") {
+          steps.push(...JSON.parse(JSON.stringify(regCIMD)));
+          steps.push(...JSON.parse(JSON.stringify(authShared1)));
+          steps.push(JSON.parse(JSON.stringify(cimdFetch)));
+          steps.push(...JSON.parse(JSON.stringify(authShared2)));
+        } else {
+          steps.push(...JSON.parse(JSON.stringify(regDCR)));
+          steps.push(...JSON.parse(JSON.stringify(authShared1)));
+          steps.push(...JSON.parse(JSON.stringify(authShared2)));
+        }
+        // token-level substitutions
+        const cid =
+          path === "cimd"
+            ? "https://app.example.com/oauth/client.json"
+            : "s6BhdRkqt3";
+        const cimdFlag = path === "cimd" ? "true" : "false";
+        const regEp = path === "dcr" ? "https://auth.example.com/register" : "";
+        steps.forEach((s) => {
+          if (s.code) {
+            s.code = s.code
+              .replaceAll("__CLIENT_ID__", cid)
+              .replaceAll("__CIMD_FLAG__", cimdFlag)
+              .replaceAll("__REG_EP__", regEp);
+          }
+        });
+        return steps;
+      }
+
+      const PATHS = {
+        cimd: {
+          desc: "Client ID Metadata Documents — the now-preferred method. The client identifies itself with an HTTPS URL that points to a JSON document about itself. No registration call needed; ideal when client and server have never met before.",
+        },
+        dcr: {
+          desc: "Dynamic Client Registration — the older method, kept for backwards compatibility. The client makes a registration call to the auth server to obtain a client_id before starting the authorization flow.",
+        },
+      };
+
+      let currentPath = "cimd";
+      let steps = buildSteps(currentPath);
+      let idx = 0;
+
+      const actorEls = {
+        ua: document.getElementById("a-ua"),
+        client: document.getElementById("a-client"),
+        mcp: document.getElementById("a-mcp"),
+        as: document.getElementById("a-as"),
+      };
+      const chipLabel = {
+        ua: "User-Agent",
+        client: "MCP Client",
+        mcp: "MCP Server",
+        as: "Auth Server",
+        ext: "External",
+      };
+
+      function setPath(p) {
+        if (p === currentPath) return;
+        currentPath = p;
+        steps = buildSteps(p);
+        idx = 0;
+        document
+          .getElementById("btn-cimd")
+          .classList.toggle("active", p === "cimd");
+        document
+          .getElementById("btn-dcr")
+          .classList.toggle("active", p === "dcr");
+        render();
+      }
+
+      function chip(role) {
+        const label = role === "ext" ? "" : chipLabel[role];
+        return `<span class="chip ${role}">${label}</span>`;
+      }
+
+      function render() {
+        const s = steps[idx];
+        document.getElementById("pathDesc").textContent =
+          PATHS[currentPath].desc;
+        document.getElementById("phasePill").textContent = s.phase;
+        document.getElementById("stepCount").textContent =
+          `Step ${idx + 1} of ${steps.length}`;
+        document.getElementById("stepTitle").textContent = s.title;
+        document.getElementById("stepDesc").textContent = s.desc;
+        document.getElementById("stepWhy").textContent = s.why;
+
+        // flow line
+        let fl;
+        if (s.chips) {
+          // multi/self actor steps
+          fl = s.chips.map(chip).join('<span class="arrow">+</span>');
+          if (s.title.includes("fetches the client")) {
+            fl =
+              chip("as") +
+              '<span class="arrow">→</span>' +
+              '<span class="chip ext">Client metadata URL</span>';
+          } else if (s.chips.length === 1) {
+            fl = chip(s.chips[0]);
+          }
+        } else {
+          fl = chip(s.from) + '<span class="arrow">→</span>' + chip(s.to);
+        }
+        document.getElementById("flowLine").innerHTML = fl;
+
+        // code
+        const slot = document.getElementById("codeSlot");
+        if (s.code) {
+          slot.innerHTML = `<div class="codebox">${s.code}</div>`;
+        } else {
+          slot.innerHTML = `<div class="nocode">No API request in this step — the user interacts directly with the authorization server's login &amp; consent UI in the browser.</div>`;
+        }
+
+        // light up actors
+        const lit = new Set();
+        if (s.chips) {
+          s.chips.forEach((x) => {
+            if (actorEls[x]) lit.add(x);
+          });
+        } else {
+          if (actorEls[s.from]) lit.add(s.from);
+          if (actorEls[s.to]) lit.add(s.to);
+        }
+        Object.keys(actorEls).forEach((k) => {
+          actorEls[k].classList.toggle("lit", lit.has(k));
+        });
+
+        // progress dots
+        const prog = document.getElementById("progress");
+        prog.innerHTML = "";
+        steps.forEach((_, i) => {
+          const d = document.createElement("i");
+          d.className = i < idx ? "done" : i === idx ? "now" : "";
+          d.onclick = () => {
+            idx = i;
+            render();
+          };
+          prog.appendChild(d);
+        });
+
+        document.getElementById("prevBtn").disabled = idx === 0;
+        document.getElementById("nextBtn").disabled = idx === steps.length - 1;
+      }
+
+      function go(d) {
+        const n = idx + d;
+        if (n >= 0 && n < steps.length) {
+          idx = n;
+          render();
+        }
+      }
+      function reset() {
+        idx = 0;
+        render();
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") go(1);
+        if (e.key === "ArrowLeft") go(-1);
+      });
+
+      render();
+    </script>
+  </body>
+</html>

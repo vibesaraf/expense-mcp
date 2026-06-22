@@ -4,6 +4,7 @@ import { userRepository } from "../db/repositories/index.js";
 import type { McpAuthInfo } from "./types.js";
 import { verifyIdToken, type TokenData } from "../utils/oidc.js";
 import { deriveRolesFromScopes } from "../middleware/rbac.middleware.js";
+import { LR_MCP_SCOPE } from "../config/constants.js";
 
 function extractBearerToken(authHeader?: string): string | null {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -53,6 +54,7 @@ export async function mcpAuthMiddleware(
   const token = extractBearerToken(req.headers.authorization);
 
   if (!token) {
+    console.log("code reached here");
     setWwwAuthenticateHeader(res);
     res.status(401).json({ error: "Missing or invalid Authorization header" });
     return;
@@ -62,6 +64,14 @@ export async function mcpAuthMiddleware(
     const tokenData = await verifyIdToken(token, {
       audience: config.MCP_RESOURCE_URL,
     });
+
+    if (!tokenData.scopes.includes(LR_MCP_SCOPE)) {
+      setWwwAuthenticateHeader(res);
+      res.status(401).json({
+        error: `Token missing required scope: ${LR_MCP_SCOPE}`,
+      });
+      return;
+    }
 
     const email = tokenData.claims.email as string | undefined;
     const user = userRepository.findByLrUserIdOrEmail(tokenData.sub, email);

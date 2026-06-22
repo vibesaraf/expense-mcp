@@ -5,8 +5,6 @@ import type {
   ToolHandlerNoInput,
   ToolHandlerWithInput,
 } from "./types.js";
-import { createErrorResponse } from "./types.js";
-
 type ToolDefinition = {
   name: string;
   description: string;
@@ -25,18 +23,6 @@ export function defineTool(definition: ToolDefinition) {
       },
       async (args: unknown, extra: unknown) => {
         const toolExtra = extra as McpToolExtra;
-        const authInfo = toolExtra?.authInfo;
-
-        if (definition.scopes && definition.scopes.length > 0) {
-          const grantedScopes = authInfo?.scopes ?? [];
-          const missingScopes = definition.scopes.filter(
-            (scope) => !grantedScopes.includes(scope),
-          );
-
-          if (missingScopes.length > 0) {
-            return createErrorResponse("You do not have the permission to access this tool");
-          }
-        }
 
         if (definition.input) {
           const handler = definition.handler as ToolHandlerWithInput<any>;

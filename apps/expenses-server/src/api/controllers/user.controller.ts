@@ -1,10 +1,18 @@
 import type { Request, Response, NextFunction } from "express";
 import { userService } from "../../services/index.js";
-import { sendCreated } from "../../utils/response.js";
+import { sendCreated, sendSuccess } from "../../utils/response.js";
 import { registerUserSchema } from "../validators/index.js";
 import { ValidationError } from "../../utils/errors.js";
 
 export class UserController {
+  async getMe(req: Request, res: Response, next: NextFunction) {
+    try {
+      sendSuccess(res, req.user!);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   /**
    * POST /api/users/register - Register a new user
    */

@@ -90,6 +90,7 @@ export function createMcpRouter(): RequestHandler {
 
         const server = createServer();
         await server.connect(transport);
+        console.log("request in mcpPostHandler");
         await transport.handleRequest(req, res, req.body);
         return;
       }
