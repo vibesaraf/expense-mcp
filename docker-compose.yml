@@ -32,7 +32,7 @@ services:
   expense-web:
     build:
       context: .
-      dockerfile: apps/expenses-client/Dockerfile
+      dockerfile: apps/expense-client/Dockerfile
     ports:
       - "4173"
     environment:
