@@ -30,6 +30,7 @@ async function postToken(
   errorMessage: string,
 ): Promise<{ access_token: string; expires_in?: number }> {
   const headers = applyClientAuth(params);
+  params.set("audience", config.REST_BASE_URL);
   const res = await fetch(config.LR_TOKEN_ENDPOINT, {
     method: "POST",
     headers,
@@ -64,6 +65,8 @@ export async function getActorToken(): Promise<string> {
     grant_type: "client_credentials",
     scope: config.MCP_SERVER_ACTOR_SCOPES,
     resource: config.REST_RESOURCE_URL,
+    clientId: config.LR_CLIENT_ID,
+    clientSecret: config.LR_CLIENT_SECRET,
   });
 
   const { access_token, expires_in } = await postToken(
@@ -94,7 +97,9 @@ export async function exchangeToken(
     actor_token_type: TOKEN_TYPE,
     requested_token_type: TOKEN_TYPE,
     scope,
-    resource: config.REST_RESOURCE_URL,
+    audience: config.REST_RESOURCE_URL,
+    clientId: config.LR_CLIENT_ID,
+    clientSecret: config.LR_CLIENT_SECRET,
   });
 
   const { access_token } = await postToken(params, "Token exchange failed");

@@ -80,7 +80,6 @@ app.get("/health", (_req, res) => {
 // OAuth Metadata (public)
 // ===================
 app.use(wellKnownRouter);
-console.log("crossed well known");
 
 // ===================
 // MCP Server Endpoint

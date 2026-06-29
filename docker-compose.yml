@@ -29,5 +29,14 @@ services:
       retries: 3
       start_period: 15s
 
+  expense-web:
+    build:
+      context: .
+      dockerfile: apps/expenses-server/Dockerfile
+    ports:
+      - "4173"
+    environment:
+      NODE_ENV: production
+
 volumes:
   expense_data:

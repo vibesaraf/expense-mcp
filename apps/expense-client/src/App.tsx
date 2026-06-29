@@ -1,14 +1,14 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
-import { ProtectedRoute } from './components/ProtectedRoute'
-import { Layout } from './components/Layout'
-import { Login } from './pages/Login'
-import { Callback } from './pages/Callback'
-import { MyExpenses } from './pages/MyExpenses'
-import { SubmitExpense } from './pages/SubmitExpense'
-import { TeamExpenses } from './pages/TeamExpenses'
-import { Reports } from './pages/Reports'
-import { Activity } from './pages/Activity'
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Layout } from "./components/Layout";
+import { Login } from "./pages/Login";
+import { Callback } from "./pages/Callback";
+import { MyExpenses } from "./pages/MyExpenses";
+import { SubmitExpense } from "./pages/SubmitExpense";
+import { TeamExpenses } from "./pages/TeamExpenses";
+import { Reports } from "./pages/Reports";
+import { Activity } from "./pages/Activity";
 
 export default function App() {
   return (
@@ -25,10 +25,14 @@ export default function App() {
               <Route path="/expenses/submit" element={<SubmitExpense />} />
               <Route path="/activity" element={<Activity />} />
 
-              <Route element={<ProtectedRoute roles={['manager', 'finance_admin']} />}>
+              <Route
+                element={
+                  <ProtectedRoute roles={["manager", "finance_admin"]} />
+                }
+              >
                 <Route path="/expenses/team" element={<TeamExpenses />} />
               </Route>
-              <Route element={<ProtectedRoute roles={['finance_admin']} />}>
+              <Route element={<ProtectedRoute roles={["finance_admin"]} />}>
                 <Route path="/reports" element={<Reports />} />
               </Route>
             </Route>
@@ -36,5 +40,5 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
-  )
+  );
 }

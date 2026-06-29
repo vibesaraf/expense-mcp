@@ -1,4 +1,4 @@
-import { Link, Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 export function Layout() {
@@ -9,15 +9,41 @@ export function Layout() {
 
   return (
     <>
-      <nav>
-        <Link to="/expenses/me">My Expenses</Link>
-        <Link to="/expenses/submit">Submit Expense</Link>
-        {isManager && <Link to="/expenses/team">Team Expenses</Link>}
-        {isFinanceAdmin && <Link to="/reports">Reports</Link>}
-        <Link to="/activity">Activity</Link>
-        <button type="button" onClick={() => { void logout() }}>
-          Sign out
-        </button>
+      <nav className="nav">
+        <NavLink to="/expenses/me" className="nav-brand">Expenses</NavLink>
+        <div className="nav-links">
+          <NavLink
+            to="/expenses/me"
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+          >
+            My Expenses
+          </NavLink>
+          {isManager && (
+            <NavLink
+              to="/expenses/team"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              Team Expenses
+            </NavLink>
+          )}
+          {isFinanceAdmin && (
+            <NavLink
+              to="/reports"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              Reports
+            </NavLink>
+          )}
+          <NavLink
+            to="/activity"
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+          >
+            Activity
+          </NavLink>
+          <button type="button" className="nav-link" onClick={() => { void logout() }}>
+            Sign out
+          </button>
+        </div>
       </nav>
       <main>
         <Outlet />

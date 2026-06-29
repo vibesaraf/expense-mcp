@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { apiFetch, ApiError } from '../lib/api'
 import type { Category, Expense } from '../types'
 
@@ -21,8 +20,12 @@ const EMPTY: FormState = {
   receiptUrl: '',
 }
 
-export function SubmitExpense() {
-  const navigate = useNavigate()
+interface Props {
+  onClose: () => void
+  onSuccess: () => void
+}
+
+export function ExpenseModal({ onClose, onSuccess }: Props) {
   const [categories, setCategories] = useState<Category[]>([])
   const [form, setForm] = useState<FormState>(EMPTY)
   const [submitting, setSubmitting] = useState(false)
@@ -59,7 +62,7 @@ export function SubmitExpense() {
           receiptUrl: form.receiptUrl || undefined,
         }),
       })
-      navigate('/expenses/me')
+      onSuccess()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to submit expense')
     } finally {
@@ -68,14 +71,15 @@ export function SubmitExpense() {
   }
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <h2 className="page-title">Submit Expense</h2>
-      </div>
+    <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div className="modal-header">
+          <h3 id="modal-title">New Expense</h3>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
 
-      <div className="card" style={{ maxWidth: 480 }}>
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="modal-body">
             <div className="form-group">
               <label htmlFor="categoryId" className="form-label">Category</label>
               <select
@@ -179,19 +183,15 @@ export function SubmitExpense() {
             )}
 
             {error && <div className="alert-error">{error}</div>}
+          </div>
 
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => navigate('/expenses/me')}
-              >
-                Cancel
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={submitting}>
-                {submitting ? 'Submitting…' : 'Submit Expense'}
-              </button>
-            </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting ? 'Submitting…' : 'Submit Expense'}
+            </button>
           </div>
         </form>
       </div>

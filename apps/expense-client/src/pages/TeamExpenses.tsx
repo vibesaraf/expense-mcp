@@ -93,25 +93,29 @@ export function TeamExpenses() {
   const { pagination, summary } = result ?? {}
 
   return (
-    <div style={{ padding: 24 }}>
-      <h2>Team Expenses</h2>
+    <div className="page">
+      <div className="page-header">
+        <h2 className="page-title">Team Expenses</h2>
+      </div>
 
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
-        <fieldset style={{ margin: 0 }}>
+      <div className="filters-bar">
+        <fieldset>
           <legend>Status</legend>
-          {STATUSES.map(s => (
-            <label key={s} style={{ marginRight: 8 }}>
-              <input
-                type="checkbox"
-                checked={filters.status.includes(s)}
-                onChange={() => toggleStatus(s)}
-              />
-              {' '}{s}
-            </label>
-          ))}
+          <div className="checkbox-group">
+            {STATUSES.map(s => (
+              <label key={s}>
+                <input
+                  type="checkbox"
+                  checked={filters.status.includes(s)}
+                  onChange={() => toggleStatus(s)}
+                />
+                {s}
+              </label>
+            ))}
+          </div>
         </fieldset>
         <label>
-          From{' '}
+          From
           <input
             type="date"
             value={filters.fromDate}
@@ -119,92 +123,113 @@ export function TeamExpenses() {
           />
         </label>
         <label>
-          To{' '}
+          To
           <input
             type="date"
             value={filters.toDate}
             onChange={e => setFilters(p => ({ ...p, toDate: e.target.value }))}
           />
         </label>
-        <button type="button" onClick={handleApply}>Apply</button>
-        <button type="button" onClick={handleReset}>Reset</button>
+        <div className="filter-actions">
+          <button type="button" className="btn btn-primary btn-sm" onClick={handleApply}>Apply</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={handleReset}>Reset</button>
+        </div>
       </div>
 
-      {loading && <p>Loading…</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <div className="alert-error">{error}</div>}
+      {loading && <p className="loading-text">Loading…</p>}
 
       {result && (
         <>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                {['Submitter', 'Date', 'Category', 'Amount', 'Description', 'Status', 'Actions'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '2px solid #e5e7eb' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {result.expenses.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: 16, color: '#6b7280' }}>No expenses found.</td></tr>
-              ) : result.expenses.map(e => (
-                <>
-                  <tr key={e.expenseId} style={{ borderBottom: action?.expenseId === e.expenseId ? 'none' : '1px solid #f3f4f6' }}>
-                    <td style={{ padding: '6px 8px' }}>{e.submitter.fullName}</td>
-                    <td style={{ padding: '6px 8px' }}>{e.expenseDate}</td>
-                    <td style={{ padding: '6px 8px' }}>{e.categoryName}</td>
-                    <td style={{ padding: '6px 8px' }}>{e.currency} {e.amount.toFixed(2)}</td>
-                    <td style={{ padding: '6px 8px', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.description}</td>
-                    <td style={{ padding: '6px 8px' }}><StatusBadge status={e.status} /></td>
-                    <td style={{ padding: '6px 8px' }}>
-                      {e.status === 'pending' && action?.expenseId !== e.expenseId && (
-                        <span style={{ display: 'flex', gap: 4 }}>
-                          <button type="button" onClick={() => setAction({ expenseId: e.expenseId, type: 'approve', value: '', error: '' })}>Approve</button>
-                          <button type="button" onClick={() => setAction({ expenseId: e.expenseId, type: 'reject', value: '', error: '' })}>Reject</button>
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                  {action?.expenseId === e.expenseId && (
-                    <tr key={`${e.expenseId}-action`} style={{ borderBottom: '1px solid #f3f4f6', background: '#f9fafb' }}>
-                      <td colSpan={7} style={{ padding: '8px 8px 12px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 400 }}>
-                          <strong>{action.type === 'approve' ? 'Add notes (optional)' : 'Reason for rejection *'}</strong>
-                          <textarea
-                            rows={2}
-                            value={action.value}
-                            onChange={e2 => setAction(prev => prev ? { ...prev, value: e2.target.value, error: '' } : null)}
-                            placeholder={action.type === 'approve' ? 'Optional notes…' : 'Required reason…'}
-                            style={{ padding: 6 }}
-                          />
-                          {action.error && <small style={{ color: 'red' }}>{action.error}</small>}
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button type="button" onClick={handleConfirm} disabled={submitting}>
-                              {submitting ? 'Submitting…' : `Confirm ${action.type}`}
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Submitter</th>
+                  <th>Date</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.expenses.length === 0 ? (
+                  <tr><td colSpan={7} className="empty-cell">No expenses found.</td></tr>
+                ) : result.expenses.map(e => (
+                  <>
+                    <tr key={e.expenseId}>
+                      <td>{e.submitter.fullName}</td>
+                      <td className="cell-nowrap">{e.expenseDate}</td>
+                      <td>{e.categoryName}</td>
+                      <td className="cell-nowrap">{e.currency} {e.amount.toFixed(2)}</td>
+                      <td className="cell-truncate">{e.description}</td>
+                      <td><StatusBadge status={e.status} /></td>
+                      <td>
+                        {e.status === 'pending' && action?.expenseId !== e.expenseId && (
+                          <span style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-ghost"
+                              style={{ color: '#065f46', borderColor: '#d1fae5' }}
+                              onClick={() => setAction({ expenseId: e.expenseId, type: 'approve', value: '', error: '' })}
+                            >
+                              Approve
                             </button>
-                            <button type="button" onClick={() => setAction(null)}>Cancel</button>
-                          </div>
-                        </div>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-danger"
+                              onClick={() => setAction({ expenseId: e.expenseId, type: 'reject', value: '', error: '' })}
+                            >
+                              Reject
+                            </button>
+                          </span>
+                        )}
                       </td>
                     </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
+                    {action?.expenseId === e.expenseId && (
+                      <tr key={`${e.expenseId}-action`} className="action-expand-row">
+                        <td colSpan={7} style={{ padding: '12px 14px' }}>
+                          <div className="action-expand-inner">
+                            <strong>{action.type === 'approve' ? 'Add notes (optional)' : 'Reason for rejection *'}</strong>
+                            <textarea
+                              rows={2}
+                              value={action.value}
+                              onChange={e2 => setAction(prev => prev ? { ...prev, value: e2.target.value, error: '' } : null)}
+                              placeholder={action.type === 'approve' ? 'Optional notes…' : 'Required reason…'}
+                              className="form-textarea"
+                            />
+                            {action.error && <span className="form-error">{action.error}</span>}
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button type="button" className="btn btn-primary btn-sm" onClick={handleConfirm} disabled={submitting}>
+                                {submitting ? 'Submitting…' : `Confirm ${action.type}`}
+                              </button>
+                              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAction(null)}>Cancel</button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {summary && (
-            <div style={{ marginTop: 12, color: '#374151', fontSize: 14 }}>
-              Total: <strong>${summary.totalAmount.toFixed(2)}</strong>
-              {' · '}Pending: <strong>${summary.pendingAmount.toFixed(2)}</strong>
-              {' · '}Approved: <strong>${summary.approvedAmount.toFixed(2)}</strong>
+            <div className="summary-strip">
+              <span>Total <strong>${summary.totalAmount.toFixed(2)}</strong></span>
+              <span>Pending <strong>${summary.pendingAmount.toFixed(2)}</strong></span>
+              <span>Approved <strong>${summary.approvedAmount.toFixed(2)}</strong></span>
             </div>
           )}
 
           {pagination && pagination.totalPages > 1 && (
-            <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-              <button type="button" disabled={pagination.currentPage === 1} onClick={() => setPage(pagination.currentPage - 1)}>Prev</button>
+            <div className="pagination">
+              <button type="button" className="btn btn-ghost btn-sm" disabled={pagination.currentPage === 1} onClick={() => setPage(pagination.currentPage - 1)}>Prev</button>
               <span>Page {pagination.currentPage} of {pagination.totalPages}</span>
-              <button type="button" disabled={pagination.currentPage === pagination.totalPages} onClick={() => setPage(pagination.currentPage + 1)}>Next</button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={pagination.currentPage === pagination.totalPages} onClick={() => setPage(pagination.currentPage + 1)}>Next</button>
             </div>
           )}
         </>

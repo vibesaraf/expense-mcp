@@ -63,7 +63,14 @@ export async function mcpAuthMiddleware(
   try {
     const tokenData = await verifyIdToken(token, {
       audience: config.MCP_RESOURCE_URL,
+      issuer: config.LR_ISSUER,
     });
+
+    if (!tokenData) {
+      setWwwAuthenticateHeader(res);
+      res.status(401).json({ error: "Invalid token" });
+      return;
+    }
 
     if (!tokenData.scopes.includes(LR_MCP_SCOPE)) {
       setWwwAuthenticateHeader(res);

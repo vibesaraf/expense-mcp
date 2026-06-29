@@ -10,7 +10,7 @@ function extractBearerToken(authHeader?: string): string | null {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return null;
   }
-  return authHeader.substring(7);
+  return authHeader.split(" ")[1] as string;
 }
 
 function extractToken(req: Request): string | null {
@@ -30,13 +30,14 @@ export async function authMiddleware(
     if (!token) {
       throw new UnauthorizedError("Missing or invalid Authorization header");
     }
-
     const tokenData = await verifyIdToken(token, {
       audience: config.REST_RESOURCE_URL,
     });
+    if (!tokenData) {
+      throw new UnauthorizedError("Invalid token");
+    }
 
-    const email = tokenData.claims.email as string | undefined;
-    const user = userRepository.findByLrUserIdOrEmail(tokenData.sub, email);
+    const user = userRepository.findByLrUserIdOrEmail(tokenData.sub, "");
 
     if (!user) {
       throw new UnauthorizedError("User not registered");
@@ -53,7 +54,7 @@ export async function authMiddleware(
     };
 
     req.user = authenticatedUser;
-    req.actorId = tokenData.act?.sub;
+    req.actorId = tokenData.act?.sub?.replace(/@client$/, "");
 
     next();
   } catch (error) {

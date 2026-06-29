@@ -56,6 +56,7 @@ function seedTestUsers(): void {
       fullName: "Finance 1",
       department: "Finance",
       managerId: null,
+      lrUserId: "0f0522a5ebfa46f7b25996170a5fbd8e",
     },
     // Engineering Manager
     {
@@ -64,6 +65,7 @@ function seedTestUsers(): void {
       fullName: "Manager 1",
       department: "Engineering",
       managerId: "finance_1",
+      lrUserId: "73db97efdca340f9a1bf716f40692752",
     },
     // Engineering Employees
     {
@@ -72,6 +74,7 @@ function seedTestUsers(): void {
       fullName: "Employee 1",
       department: "Engineering",
       managerId: "manager_1",
+      lrUserId: "8040625fa99f444a8cd12c0cdd8bd324",
     },
     {
       userId: "employee_2",
@@ -79,6 +82,7 @@ function seedTestUsers(): void {
       fullName: "Employee 2",
       department: "Engineering",
       managerId: "manager_1",
+      lrUserId: "c718553ed5df45bea3e777e34e26c3ab",
     },
     // Sales Manager
     {
@@ -87,6 +91,7 @@ function seedTestUsers(): void {
       fullName: "Manager 2",
       department: "Sales",
       managerId: "finance_1",
+      lrUserId: "4b1d2c6379e14b55a1c2604f44777c7f",
     },
     // Sales Employee
     {
@@ -95,6 +100,7 @@ function seedTestUsers(): void {
       fullName: "Employee 3",
       department: "Sales",
       managerId: "manager_2",
+      lrUserId: "4778672c99fb4d5ea601fe4a27c1c6fb",
     },
   ];
 
@@ -105,7 +111,7 @@ function seedTestUsers(): void {
       user.fullName,
       user.department,
       user.managerId,
-      null,
+      user.lrUserId,
     );
   }
 

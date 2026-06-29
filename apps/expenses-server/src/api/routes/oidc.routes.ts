@@ -8,7 +8,10 @@ import { sendSuccess, sendNoContent } from "../../utils/response.js";
 
 const router = Router();
 
-const callbackBodySchema = z.object({ code: z.string().min(1) });
+const callbackBodySchema = z.object({
+  code: z.string().min(1),
+  code_verifier: z.string().min(43).max(128),
+});
 
 router.post("/callback", async (req, res, next) => {
   try {
@@ -19,7 +22,7 @@ router.post("/callback", async (req, res, next) => {
       });
     }
 
-    const { code } = parsed.data;
+    const { code, code_verifier } = parsed.data;
 
     const params = new URLSearchParams({
       grant_type: "authorization_code",
@@ -28,6 +31,7 @@ router.post("/callback", async (req, res, next) => {
       client_id: config.LR_CLIENT_ID,
       client_secret: config.LR_CLIENT_SECRET,
       resource: config.REST_RESOURCE_URL,
+      code_verifier,
     });
 
     const tokenRes = await fetch(config.LR_OIDC_TOKEN_ENDPOINT, {
@@ -49,7 +53,6 @@ router.post("/callback", async (req, res, next) => {
     };
 
     res.cookie(config.COOKIE_NAME, access_token, {
-      httpOnly: true,
       secure: config.COOKIE_SECURE,
       sameSite: "lax",
       maxAge: (expires_in ?? 3600) * 1000,
@@ -58,6 +61,10 @@ router.post("/callback", async (req, res, next) => {
     const tokenData = await verifyIdToken(access_token, {
       audience: config.REST_RESOURCE_URL,
     });
+
+    if (!tokenData) {
+      throw new UnauthorizedError("Token verification failed");
+    }
 
     const user = userRepository.findByLrUserIdOrEmail(
       tokenData.sub,

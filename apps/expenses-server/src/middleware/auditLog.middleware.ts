@@ -10,15 +10,11 @@ const ACTION_MAP: Record<string, string> = {
   "POST:/api/expenses/:expenseId/approve": "approve_expense",
   "POST:/api/expenses/:expenseId/reject": "reject_expense",
   "POST:/api/expenses/reports/generate": "generate_report",
-  "GET:/api/users/me": "get_profile",
-  "GET:/api/activity": "list_activity",
 };
 
 const RESOURCE_TYPE_MAP: Record<string, string> = {
   "/api/expenses": "expense",
   "/api/expenses/reports": "report",
-  "/api/users": "user",
-  "/api/activity": "audit_log",
 };
 
 export function auditLogMiddleware(
@@ -28,6 +24,8 @@ export function auditLogMiddleware(
 ): void {
   res.on("finish", () => {
     try {
+      if (req.method === "OPTIONS") return;
+      if (res.statusCode === 304) return;
       if (!req.user) return;
 
       const routePath = req.route?.path ?? "";
@@ -41,7 +39,9 @@ export function auditLogMiddleware(
         actorClientId: req.actorId,
         action,
         resourceType: RESOURCE_TYPE_MAP[req.baseUrl] ?? req.baseUrl,
-        resourceId: (req.params.expenseId ?? req.params.id) as string | undefined,
+        resourceId: (req.params.expenseId ?? req.params.id) as
+          | string
+          | undefined,
         scopeUsed: req.user.scopes.join(" "),
         statusCode: res.statusCode,
       });

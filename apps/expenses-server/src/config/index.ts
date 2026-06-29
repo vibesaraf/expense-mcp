@@ -40,6 +40,8 @@ const envSchema = z.object({
   // REST resource (target audience for REST API tokens)
   REST_RESOURCE_URL: z.string().url().default("http://localhost:3001"),
   REST_BASE_URL: z.string().url().default("http://localhost:3001"),
+  LR_USERINFO_ENDPOINT: z.string().url(),
+  LR_MCP_ISSUER: z.string().url(),
 
   // OIDC callback (React auth flow)
   OIDC_REDIRECT_URI: z.string().url(),
