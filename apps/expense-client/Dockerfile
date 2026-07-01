@@ -10,13 +10,13 @@ WORKDIR /app
 COPY .npmrc package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json ./
 COPY apps/client/package.json ./apps/client/package.json
 COPY apps/expenses-server/package.json ./apps/expenses-server/package.json
-COPY apps/expenses-client/package.json ./apps/expenses-client/package.json
+COPY apps/expense-client/package.json ./apps/expense-client/package.json
 COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 COPY packages/ui/package.json ./packages/ui/package.json
 
 RUN pnpm install --frozen-lockfile
-RUN pnpm --filter expenses-server deploy --prod --legacy /app/deploy/expenses-server
+RUN pnpm --filter expense-client deploy --prod --legacy /app/deploy/expense-client
 
 FROM base AS builder
 

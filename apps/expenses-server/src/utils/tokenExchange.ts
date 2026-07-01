@@ -31,6 +31,10 @@ async function postToken(
 ): Promise<{ access_token: string; expires_in?: number }> {
   const headers = applyClientAuth(params);
   params.set("audience", config.REST_BASE_URL);
+  console.log({
+    endpoint: config.LR_TOKEN_ENDPOINT,
+    params: params.toString(),
+  });
   const res = await fetch(config.LR_TOKEN_ENDPOINT, {
     method: "POST",
     headers,
