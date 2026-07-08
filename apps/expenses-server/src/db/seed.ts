@@ -11,7 +11,7 @@ function seedCategories(): void {
   const db = getDb();
 
   const insertCategory = db.prepare(`
-    INSERT OR IGNORE INTO expense_categories 
+    INSERT OR IGNORE INTO expense_categories
     (category_name, description, requires_receipt, max_amount)
     VALUES (?, ?, ?, ?)
   `);
@@ -36,7 +36,7 @@ function seedTestUsers(): void {
   const db = getDb();
 
   const insertUser = db.prepare(`
-    INSERT OR IGNORE INTO users 
+    INSERT OR IGNORE INTO users
     (user_id, email, full_name, department, manager_id, lr_user_id)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
@@ -56,7 +56,7 @@ function seedTestUsers(): void {
       fullName: "Finance 1",
       department: "Finance",
       managerId: null,
-      lrUserId: "0f0522a5ebfa46f7b25996170a5fbd8e",
+      lrUserId: "a60099ee324442afa3d531b178a6cbca",
     },
     // Engineering Manager
     {
@@ -65,7 +65,7 @@ function seedTestUsers(): void {
       fullName: "Manager 1",
       department: "Engineering",
       managerId: "finance_1",
-      lrUserId: "73db97efdca340f9a1bf716f40692752",
+      lrUserId: "fcf38651524c4ec39b520d9da66b2935",
     },
     // Engineering Employees
     {
@@ -74,7 +74,7 @@ function seedTestUsers(): void {
       fullName: "Employee 1",
       department: "Engineering",
       managerId: "manager_1",
-      lrUserId: "8040625fa99f444a8cd12c0cdd8bd324",
+      lrUserId: "0d0c6e2d572d486697ce80b3876e5fc4",
     },
     {
       userId: "employee_2",
@@ -82,7 +82,7 @@ function seedTestUsers(): void {
       fullName: "Employee 2",
       department: "Engineering",
       managerId: "manager_1",
-      lrUserId: "c718553ed5df45bea3e777e34e26c3ab",
+      lrUserId: "d047683b04a04bcd932d239bcbd3dd22",
     },
     // Sales Manager
     {
@@ -91,7 +91,7 @@ function seedTestUsers(): void {
       fullName: "Manager 2",
       department: "Sales",
       managerId: "finance_1",
-      lrUserId: "4b1d2c6379e14b55a1c2604f44777c7f",
+      lrUserId: "9bbcda81c2b64b05b7c546fef8bf907c",
     },
     // Sales Employee
     {
@@ -100,7 +100,7 @@ function seedTestUsers(): void {
       fullName: "Employee 3",
       department: "Sales",
       managerId: "manager_2",
-      lrUserId: "4778672c99fb4d5ea601fe4a27c1c6fb",
+      lrUserId: "0a4ed8542b154ba3b4776977384254a1",
     },
   ];
 
@@ -125,7 +125,7 @@ function seedSampleExpenses(): void {
   const db = getDb();
 
   const insertExpense = db.prepare(`
-    INSERT OR IGNORE INTO expenses 
+    INSERT OR IGNORE INTO expenses
     (expense_id, submitter_id, category_id, amount, currency, description, expense_date, receipt_url, status, submitted_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', ?))
   `);
@@ -230,7 +230,8 @@ function seedSampleExpenses(): void {
       currency: "USD",
       description: "Team building dinner for engineering",
       expenseDate: "2026-01-22",
-      receiptUrl: "https://storage.example.com/receipts/manager1_team_dinner.pdf",
+      receiptUrl:
+        "https://storage.example.com/receipts/manager1_team_dinner.pdf",
       status: "approved",
       submittedOffset: "-11 days",
     },
@@ -264,14 +265,14 @@ function seedApprovals(): void {
   const approvedExpenses = db
     .prepare(
       `
-    SELECT expense_id, submitter_id FROM expenses 
+    SELECT expense_id, submitter_id FROM expenses
     WHERE status IN ('approved', 'rejected')
   `,
     )
     .all() as Array<{ expense_id: string; submitter_id: string }>;
 
   const insertApproval = db.prepare(`
-    INSERT INTO expense_approvals 
+    INSERT INTO expense_approvals
     (expense_id, approver_id, action, notes)
     VALUES (?, ?, ?, ?)
   `);
