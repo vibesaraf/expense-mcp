@@ -10,7 +10,7 @@ WORKDIR /app
 COPY .npmrc package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json ./
 COPY apps/client/package.json ./apps/client/package.json
 COPY apps/expenses-server/package.json ./apps/expenses-server/package.json
-COPY apps/expenses-client/package.json ./apps/expenses-client/package.json
+COPY apps/expense-client/package.json ./apps/expense-client/package.json
 COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 COPY packages/ui/package.json ./packages/ui/package.json

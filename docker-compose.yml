@@ -1,9 +1,11 @@
 services:
   expenses-server:
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: apps/expenses-server/Dockerfile
-    ports:
+    expose:
       - "3001"
     volumes:
       - expense_data:/app/data
@@ -18,8 +20,16 @@ services:
       LR_CLIENT_ID: ${LR_CLIENT_ID}
       LR_CLIENT_SECRET: ${LR_CLIENT_SECRET}
       LR_TOKEN_ENDPOINT_AUTH_METHOD: ${LR_TOKEN_ENDPOINT_AUTH_METHOD:-client_secret_post}
+      LR_TOKEN_ENDPOINT: ${LR_TOKEN_ENDPOINT}
+      LR_AUTHORIZE_URL: ${LR_AUTHORIZE_URL}
+      LR_OIDC_TOKEN_ENDPOINT: ${LR_OIDC_TOKEN_ENDPOINT}
+      LR_USERINFO_ENDPOINT: ${LR_USERINFO_ENDPOINT}
+      LR_MCP_ISSUER: ${LR_MCP_ISSUER}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI}
       MCP_RESOURCE_URL: ${MCP_RESOURCE_URL}
       PROTECTED_RESOURCE_METADATA: ${PROTECTED_RESOURCE_METADATA}
+      REST_RESOURCE_URL: ${REST_RESOURCE_URL:-${SERVER_URL}}
+      REST_BASE_URL: ${REST_BASE_URL:-${SERVER_URL}}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
     restart: unless-stopped
     healthcheck:
@@ -30,13 +40,33 @@ services:
       start_period: 15s
 
   expense-web:
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: apps/expense-client/Dockerfile
+      args:
+        # Vite bakes these at BUILD time into the static bundle.
+        VITE_LR_AUTHORIZE_URL: ${VITE_LR_AUTHORIZE_URL}
+        VITE_LR_CLIENT_ID: ${VITE_LR_CLIENT_ID}
+        VITE_LR_REDIRECT_URI: ${VITE_LR_REDIRECT_URI}
+        VITE_REST_RESOURCE_URL: ${VITE_REST_RESOURCE_URL}
+    expose:
+      - "80"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - expenses-server
+      - expense-web
     ports:
-      - "4173"
-    environment:
-      NODE_ENV: production
+      # Single public entrypoint for the domain. Terminate TLS here (add a
+      # 443 server block + cert volume) or behind an upstream load balancer.
+      - "3000:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
 
 volumes:
   expense_data:
