@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "db:seed": "tsx src/db/seed.ts",
+    "db:seed": "pnpx tsx src/db/seed.ts",
     "db:reset": "rm -f data/expense.db && pnpm run db:seed",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit"
