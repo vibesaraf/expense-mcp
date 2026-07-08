@@ -32,7 +32,6 @@ COPY packages/typescript-config ./packages/typescript-config
 
 WORKDIR /app/apps/expenses-server
 RUN pnpm run build
-RUN pnpm run db:reset
 
 FROM node:22-alpine AS runner
 

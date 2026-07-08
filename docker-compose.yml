@@ -7,8 +7,6 @@ services:
       dockerfile: apps/expenses-server/Dockerfile
     expose:
       - "3001"
-    volumes:
-      - expense_data:/app/data
     environment:
       NODE_ENV: production
       PORT: "3001"
@@ -67,6 +65,3 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped
-
-volumes:
-  expense_data:
