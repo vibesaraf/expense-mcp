@@ -10,7 +10,10 @@ export function Layout() {
   return (
     <>
       <nav className="nav">
-        <NavLink to="/expenses/me" className="nav-brand">Expenses</NavLink>
+        <div className="nav-brand-group">
+          <NavLink to="/expenses/me" className="nav-brand">Expenses</NavLink>
+          {user && <span className="nav-user-email" title={user.email}>{user.email}</span>}
+        </div>
         <div className="nav-links">
           <NavLink
             to="/expenses/me"

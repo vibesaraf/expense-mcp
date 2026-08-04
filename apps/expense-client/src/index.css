@@ -208,12 +208,29 @@ p {
   z-index: 100;
 }
 
+.nav-brand-group {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
 .nav-brand {
   font-size: 16px;
   font-weight: 700;
   color: var(--red);
   text-decoration: none;
   letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+.nav-user-email {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gray-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-links {
