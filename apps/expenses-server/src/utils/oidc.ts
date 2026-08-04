@@ -30,15 +30,13 @@ export async function verifyIdToken(
     const jwksData = await jwksRes.json();
     const jwks = await JWKS.fromObject(jwksData as JWKSObject);
 
-    const defaultIssuers = [
-      url,
-      "https://dev-vaibhav.devhub.lrinternal.com/service/oauth/",
-    ];
+    // Callers pass the exact set of acceptable issuers; default to the OIDC
+    // app issuer only so nothing broader is trusted by accident.
     const issuers = options.issuer
       ? Array.isArray(options.issuer)
         ? options.issuer
         : [options.issuer]
-      : defaultIssuers;
+      : [envConfig.LR_ISSUER];
 
     const payload = (await JWT.verify(token, jwks, {
       issuer: issuers,

@@ -30,8 +30,11 @@ export async function authMiddleware(
     if (!token) {
       throw new UnauthorizedError("Missing or invalid Authorization header");
     }
+    // REST accepts user tokens from the OIDC app issuer plus service tokens
+    // minted by the token-exchange (service) issuer.
     const tokenData = await verifyIdToken(token, {
       audience: config.REST_RESOURCE_URL,
+      issuer: [config.LR_ISSUER, config.LR_SERVICE_ISSUER],
     });
     if (!tokenData) {
       throw new UnauthorizedError("Invalid token");

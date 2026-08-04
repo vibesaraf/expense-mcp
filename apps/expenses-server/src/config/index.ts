@@ -13,6 +13,9 @@ const envSchema = z.object({
 
   // LoginRadius
   LR_ISSUER: z.string().url(),
+  // Issuer of service/token-exchange tokens (`iss` claim, must match exactly).
+  // Accepted only by the REST API, never by the MCP endpoint.
+  LR_SERVICE_ISSUER: z.string().url(),
   LR_INTROSPECT_URL: z.string().url(),
   LR_JWKS_URI: z.string().url(),
   LR_CLIENT_ID: z.string().min(1, "LR_CLIENT_ID is required"),
