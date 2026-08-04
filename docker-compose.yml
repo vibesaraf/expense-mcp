@@ -13,6 +13,7 @@ services:
       DATABASE_PATH: /app/data/expense.db
       SERVER_URL: ${SERVER_URL}
       LR_ISSUER: ${LR_ISSUER}
+      LR_SERVICE_ISSUER: ${LR_SERVICE_ISSUER}
       LR_INTROSPECT_URL: ${LR_INTROSPECT_URL}
       LR_JWKS_URI: ${LR_JWKS_URI}
       LR_CLIENT_ID: ${LR_CLIENT_ID}
