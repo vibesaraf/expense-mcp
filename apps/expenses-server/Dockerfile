@@ -1,5 +1,8 @@
 FROM node:22-alpine AS base
-RUN corepack enable && corepack prepare pnpm@10.11.0 --activate
+# Must match the root package.json "packageManager" field, otherwise corepack
+# ignores this pin and downloads that version mid-build.
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable && corepack prepare pnpm@11.13.1 --activate
 
 FROM base AS deps
 
@@ -25,6 +28,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/expenses-server/node_modules ./apps/expenses-server/node_modules
 
+COPY .npmrc package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/expenses-server/package.json ./apps/expenses-server/package.json
 COPY apps/expenses-server/tsconfig.json ./apps/expenses-server/tsconfig.json
 COPY apps/expenses-server/src ./apps/expenses-server/src

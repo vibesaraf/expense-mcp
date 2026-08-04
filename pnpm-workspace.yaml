@@ -1,8 +1,16 @@
 packages:
   - apps/*
   - packages/*
+# Docker builder stages hold a partial workspace (only the app being built), so
+# pnpm's pre-run state check sees a mismatch and fires an implicit
+# `install --production`, which purges node_modules (fatal with no TTY) and
+# would prune the devDeps the build needs (vite, tsc). pnpm 11 reads this from
+# this file only — the same key in .npmrc is ignored.
+verifyDepsBeforeRun: false
 allowBuilds:
-  better-sqlite3: false
+  # Must stay true: better-sqlite3 needs its install script to fetch/compile
+  # better_sqlite3.node, otherwise the server cannot open the DB at runtime.
+  better-sqlite3: true
   esbuild: false
   msw: false
   sharp: false

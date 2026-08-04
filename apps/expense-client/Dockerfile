@@ -1,5 +1,8 @@
 FROM node:22-alpine AS base
-RUN corepack enable && corepack prepare pnpm@10.11.0 --activate
+# Must match the root package.json "packageManager" field, otherwise corepack
+# ignores this pin and downloads that version mid-build.
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable && corepack prepare pnpm@11.13.1 --activate
 
 FROM base AS deps
 
